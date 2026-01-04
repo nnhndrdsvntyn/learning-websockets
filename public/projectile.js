@@ -3,24 +3,22 @@ import { entityMap } from './shared/entitymap.js';
 import { LC, camera } from './client.js';
 import { TPS } from './shared/entitymap.js';
 
-export class Mob {
-    constructor(id, x, y, type) {
+export class Projectile {
+    constructor(id, x, y, angle, type) {
         this.id = id;
-
 
         this.x = x;
         this.newX = x;
         this.y = y;
         this.newY = y;
 
-        this.angle = 0
-        this.newAngle = 0;
-        
-        this.radius = entityMap.MOBS[type].radius;
+        this.angle = angle;
+        this.newAngle = angle;
 
         this.type = type;
+        this.radius = 10;
 
-        ENTITIES.MOBS[id] = this;
+        ENTITIES.PROJECTILES[id] = this;
     }
     draw() {
         const lerpFactor = (TPS.client / TPS.server) / 10;
@@ -48,7 +46,15 @@ export class Mob {
 
         // keep angle within range
         this.angle = ((this.angle + 180) % 360 + 360) % 360 - 180;
-
+        
+        LC.drawImage({
+            name: entityMap.PROJECTILES[this.type].imgName,
+            pos: [screenPosX - this.radius, screenPosY - this.radius],
+            angle: this.angle,
+            size: [this.radius * 2, this.radius * 2],
+            rotation: this.angle,
+        })
+        
         /*
         LC.drawCircle({
             pos: [screenPosX, screenPosY],
@@ -57,14 +63,5 @@ export class Mob {
             transparency: 0.5
         });
         */
-
-        let proportions = { ... entityMap.MOBS[this.type].imgProportions };
-
-        LC.drawImage({
-            name: entityMap.MOBS[this.type].imgName,
-            pos: [screenPosX - this.radius * (proportions[0] / 2), screenPosY - this.radius * (proportions[1] / 2)],
-            size: [proportions[0] * this.radius, proportions[1] * this.radius],
-            rotation: this.angle
-        })
     }
 }

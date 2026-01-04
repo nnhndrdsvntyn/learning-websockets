@@ -1,10 +1,11 @@
 import {
     Player
-} from './player.js'
+} from './player.js';
 import {
     Mob
-} from './mob.js'
-import { Structure } from './structure.js'
+} from './mob.js';
+import { Structure } from './structure.js';
+import { Projectile } from './projectile.js';
 import {
     wss
 } from '../server.js';
@@ -13,17 +14,19 @@ export const ENTITIES = {
     PLAYERS: {},
     MOBS: {},
     STRUCTURES: {},
+    PROJECTILES: {},
     playerIds: new Set(),
     newEntity: ({
         type,
         id,
         x,
         y,
+        username
     }) => {
         if (type === 'player') {
             type = 1;
             new Player(id, x, y);
-            ENTITIES.PLAYERS[id].username = 'player' + id; // Default username
+            ENTITIES.PLAYERS[id].username = username || ('player' + id); // Default username
             ENTITIES.playerIds.add(id);
         } else if (type === 'mob') {
             type = 2;
@@ -35,13 +38,13 @@ export const ENTITIES = {
                 client.send(buildInitPacket(client.id));
                 return;
             }
-            const buffer = new ArrayBuffer(8);
+            const buffer = new ArrayBuffer(10);
             const view = new DataView(buffer);
             let offset = 0;
 
             view.setUint8(offset++, 3); // add packet
             view.setUint8(offset++, type); // entity type
-            view.setUint16(offset, id); offset += 2; // entity id
+            view.setUint32(offset, id); offset += 4; // entity id
             view.setUint16(offset, x); // x
             offset += 2;
             view.setUint16(offset, y); // y
@@ -55,16 +58,21 @@ export const ENTITIES = {
             delete ENTITIES.PLAYERS[id];
             ENTITIES.playerIds.delete(id);
         }
+
+        if (type === 'projectile') {
+            type = 2;
+            delete ENTITIES.PROJECTILES[id];
+        }
         wss.clients.forEach(client => {
-            const buffer = new ArrayBuffer(4);
+            const buffer = new ArrayBuffer(1 + 1 + 4);
             const view = new DataView(buffer);
             let offset = 0;
             view.setUint8(offset++, 4); // delete packet
             view.setUint8(offset++, type); // entity type
-            view.setUint16(offset, id); offset += 2; // entity id
+            view.setUint32(offset, id); offset += 4; // entity id
 
             client.send(buffer); // tell this client (loop tells all connected clients)
-        })
+        });
     }
 }
 
@@ -97,13 +105,13 @@ export function buildInitPacket(wsId) {
     */
     let bufferLength = 1 + 1; // packet type + player count
     for (const player of Object.values(ENTITIES.PLAYERS)) {
-        bufferLength += 1 + 2 + 2 + 2 + 1 + player.username.length; // id, x, y, angle, username length, username
+        bufferLength += 4 + 2 + 2 + 2 + 1 + player.username.length; // id(4), x(2), y(2), angle(2), username length
     }
     bufferLength += 2; // mob count
-    bufferLength += Object.keys(ENTITIES.MOBS).length * 9; // id(2) + x(2) + y(2) + angle(2) + type(1)
+    bufferLength += Object.keys(ENTITIES.MOBS).length * 11; // id(4) + x(2) + y(2) + angle(2) + type(1)
 
     bufferLength += 2; // structure count
-    bufferLength += Object.keys(ENTITIES.STRUCTURES).length * 7; // id(2) + x(2) + y(2) + type(1)
+    bufferLength += Object.keys(ENTITIES.STRUCTURES).length * 9; // id(4) + x(2) + y(2) + type(1)
 
     const buffer = new ArrayBuffer(bufferLength);
     const view = new DataView(buffer);
@@ -114,7 +122,8 @@ export function buildInitPacket(wsId) {
     // write players to packet
     view.setUint8(offset++, Object.keys(ENTITIES.PLAYERS).length) // number of players
     for (const player of Object.values(ENTITIES.PLAYERS)) {
-        view.setUint8(offset++, player.id) // id
+        view.setUint32(offset, player.id); // id
+        offset += 4;
         view.setUint16(offset, player.x); // x
         offset += 2;
         view.setUint16(offset, player.y); // y
@@ -132,7 +141,7 @@ export function buildInitPacket(wsId) {
     // write mobs
     view.setUint16(offset, Object.keys(ENTITIES.MOBS).length); offset += 2; // number of mobs
     for (const mob of Object.values(ENTITIES.MOBS)) {
-        view.setUint16(offset, mob.id); offset += 2; // id
+        view.setUint32(offset, mob.id); offset += 4; // id
         view.setUint16(offset, mob.x); offset += 2; // x
         view.setUint16(offset, mob.y); offset += 2; // y
         view.setInt16(offset, mob.angle); offset += 2; // angle
@@ -142,7 +151,7 @@ export function buildInitPacket(wsId) {
     // write structures to packet
     view.setUint16(offset, Object.keys(ENTITIES.STRUCTURES).length); offset += 2 // number of structures
     for (const structure of Object.values(ENTITIES.STRUCTURES)) {
-        view.setUint16(offset, structure.id); offset += 2; // id
+        view.setUint32(offset, structure.id); offset += 4; // id
         view.setUint16(offset, structure.x); offset += 2; // x
         view.setUint16(offset, structure.y); offset += 2; // y
         view.setUint8(offset++, structure.type); // type

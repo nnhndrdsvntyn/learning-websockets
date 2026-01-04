@@ -35,8 +35,8 @@ export class Mob {
             if (distance <= this.radius + player.radius) {
                 // resolve collision
                 const angle = Math.atan2(player.y - this.y, player.x - this.x);
-                const dx = Math.cos(angle) * this.radius
-                const dy = Math.sin(angle) * this.radius
+                const dx = Math.cos(angle) * 10
+                const dy = Math.sin(angle) * 10
 
                 this.x -= dx;
                 this.y -= dy;
@@ -66,4 +66,10 @@ setTimeout(() => {
     for (let i = 1; i <= 100; i++) {
         new Mob(i, Math.floor(Math.random() * 10000), Math.floor(Math.random() * 10000), 1);
     }
-});
+    for (let i = 101; i <= 201; i++) {
+        new Mob(i, Math.floor(Math.random() * 10000), Math.floor(Math.random() * 10000), 2);
+    }
+    for (let i = 202; i <= 302; i++) {
+        new Mob(i, Math.floor(Math.random() * 10000), Math.floor(Math.random() * 10000), 3);
+    }
+}, 100);

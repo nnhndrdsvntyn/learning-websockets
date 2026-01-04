@@ -33,7 +33,7 @@ export class LibCanvas {
         this.canvas.height = this.height;
         this.canvas.style.width = '100%';
         this.canvas.style.height = '100%';
-        this.canvas.style.backgroundColor = 'green';
+        this.canvas.style.backgroundColor = 'white';
 
         this.container.appendChild(this.canvas);
         document.body.appendChild(this.container);

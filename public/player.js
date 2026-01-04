@@ -10,6 +10,7 @@ import {
 import {
     camera
 } from './client.js';
+import { TPS } from './shared/entitymap.js';
 
 export class Player {
     constructor(id, x, y) {
@@ -30,16 +31,18 @@ export class Player {
         ENTITIES.PLAYERS[id] = this;
     }
     draw() {
+        const lerpFactor = (TPS.client / TPS.server) / 10;
+        
         if (typeof this.newX === 'undefined' || typeof this.newY === 'undefined') return;
 
         // lerp if x, y is NOT UNDEFINED, else don't lerp and change x, y directly.
         if (typeof this.x !== 'undefined') {
-            this.x = this.x + (this.newX - this.x) * 0.3;
+            this.x = this.x + (this.newX - this.x) * lerpFactor;
         } else {
             this.x = this.newX
         }
         if (typeof this.y !== 'undefined') {
-            this.y = this.y + (this.newY - this.y) * 0.3;
+            this.y = this.y + (this.newY - this.y) * lerpFactor;
         } else {
             this.y = this.newY
         };
@@ -57,7 +60,7 @@ export class Player {
 
         // lerp angle for other players
         if (this.id != myId) {
-            this.angle += (((this.newAngle - this.angle + 540) % 360 - 180) * 0.3);
+            this.angle += (((this.newAngle - this.angle + 540) % 360 - 180) * lerpFactor);
         }
 
         // keep angle within range

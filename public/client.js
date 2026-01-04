@@ -6,8 +6,9 @@ window.ENTITIES = ENTITIES;
 import { Player } from './player.js';
 import { Structure } from './structure.js';
 import { Mob } from './mob.js';
-
-window.Structure = Structure;
+import { initializeUI, isUIOpen } from './ui.js';
+initializeUI();
+import { encodeUsername } from './helpers.js';
 
 export const camera = {
     x: 0,
@@ -17,10 +18,10 @@ export const camera = {
         y: 0
     }
 }
-window.camera = camera;
+// window.camera = camera;
 
 export const LC = new LibCanvas();
-window.LC = LC;
+// window.LC = LC;
 
 // load images
 for (const image of Object.values(entityMap.PLAYERS.imgs)) {
@@ -41,10 +42,16 @@ for (const structure of Object.values(entityMap.STRUCTURES)) {
         src: structure.imgSrc
     });
 }
+for (const projectile of Object.values(entityMap.PROJECTILES)) {
+    LC.loadImage({
+        name: projectile.imgName,
+        src: projectile.imgSrc
+    });
+}
 
-const ws = new WebSocket(`ws://${location.host}`);
+export const ws = new WebSocket(`ws://${location.host}`);
 ws.binaryType = 'arraybuffer'
-window.ws = ws;
+// window.ws = ws;
 
 export let myId;
 ws.onopen = () => {
@@ -55,16 +62,7 @@ ws.onopen = () => {
             username = prompt("Enter your username\nMax 15 characeters");
         }
 
-        const buffer = new ArrayBuffer(2 + username.length);
-        const view = new DataView(buffer);
-
-        let offset = 0;
-        view.setUint8(offset++, 1); // packet type
-        view.setUint8(offset++, username.length);
-
-        for (let i = 0; i < username.length; i++) {
-            view.setUint8(offset++, username.charCodeAt(i));
-        }
+        const buffer = encodeUsername(username);
 
         ws.send(buffer);
         
@@ -79,7 +77,7 @@ ws.onclose = () => {
 ws.onmessage = (event) => {
     if (!myId) {
         myId = event.data
-        window.myId = myId;
+        // window.myId = myId;
         new Player(myId, 5000, 5000);
         camera.target.x = ENTITIES.PLAYERS[myId].x;
         camera.target.y = ENTITIES.PLAYERS[myId].y;
@@ -95,13 +93,29 @@ ws.onmessage = (event) => {
 // render loop
 function render() {
     LC.clearCanvas();
+
     LC.drawRect({
-        pos: [-camera.x, -camera.y],
-        size: [10000, 10000],
-        color: '#5b8d5bff'
+        pos: [-5000 - camera.x, -5000 - camera.y],
+        size: [10000, 20000],
+        color: 'rgba(20, 80, 20, 1)'
+    });
+    LC.drawRect({
+        pos: [5000 - camera.x, -5000 - camera.y],
+        size: [10000, 20000],
+        color: 'rgba(120, 120, 120, 1)'
     });
 
-    // Draw grid lines
+    LC.drawRect({
+        pos: [0 - camera.x, 0 - camera.y],
+        size: [5000, 10000],
+        color: 'rgba(34, 139, 34, 1)'
+    });
+    LC.drawRect({
+        pos: [5000 - camera.x, 0 - camera.y],
+        size: [5000, 10000],
+        color: 'rgba(200, 200, 200, 1)'
+    });
+
     const gridSize = 100; // Size of each grid square
     const startX = -camera.x % gridSize;
     const startY = -camera.y % gridSize;
@@ -127,11 +141,13 @@ function render() {
     for (const mob of Object.values(ENTITIES.MOBS)) {
         mob.draw();
     }
+    for (const projectile of Object.values(ENTITIES.PROJECTILES)) {
+        projectile.draw();
+    }
     for (const player of Object.values(ENTITIES.PLAYERS)) {
         player.draw();
     }
 
-    // ui
     const localPlayer = ENTITIES.PLAYERS[myId];
     LC.drawText({
         text: `x: ${localPlayer.x.toFixed(2)}, y: ${localPlayer.y.toFixed(2)}`,
@@ -142,10 +158,8 @@ function render() {
     requestAnimationFrame(render);
 }
 
-
-// event listeners
-
 window.addEventListener("mousemove", e => {
+    if (isUIOpen) return;
     let angle = Math.round(
         Math.atan2(
             e.clientY - innerHeight / 2,
@@ -164,8 +178,31 @@ window.addEventListener("mousemove", e => {
     ENTITIES.PLAYERS[myId].angle = angle;
 });
 
+window.addEventListener("mousedown", e => {
+    if (isUIOpen) return;
+
+    const buffer = new ArrayBuffer(2);
+    const view = new DataView(buffer);
+
+    view.setUint8(0, 4); // 4 for set attack packet
+    view.setUint8(1, 1) // 1 for true
+    ws.send(buffer);
+});
+
+window.addEventListener("mouseup", e => {
+    if (isUIOpen) return;
+
+    const buffer = new ArrayBuffer(2);
+    const view = new DataView(buffer);
+
+    view.setUint8(0, 4); // 4 for set attack packet
+    view.setUint8(1, 0) // 1 for false
+    ws.send(buffer);
+});
+
 const keys = new Set();
 document.addEventListener('keydown', (e) => {
+    if (isUIOpen) return;
     if (!['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(e.key.toLowerCase())) return;
     if (keys.has(e.key.toLowerCase())) return;
     keys.add(e.key.toLowerCase());
@@ -207,3 +244,21 @@ document.addEventListener('keyup', (e) => {
 
     ws.send(buffer);
 });
+
+// update client FPS
+import { TPS } from './shared/entitymap.js';
+// window.TPS = TPS;
+(() => {
+    let frames = 0;
+    setInterval(() => {
+        TPS.client = frames;
+        // console.log(TPS.client);
+        frames = 0;
+    }, 1000);
+
+    function fps() {
+        frames++;
+        requestAnimationFrame(fps);
+    }
+    requestAnimationFrame(fps);
+})();

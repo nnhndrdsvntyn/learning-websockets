@@ -1,11 +1,12 @@
 import { ENTITIES } from './game.js';
 import { entityMap } from '../public/shared/entitymap.js';
+import { Projectile } from './projectile.js';
 
 export class Player {
     constructor(id, x, y) {
         this.id = id;
 
-        this.speed = entityMap.PLAYERS.baseSpeed;
+        this.speed = entityMap.PLAYERS.baseMovementSpeed;
         this.radius = entityMap.PLAYERS.baseRadius;
 
         this.angle = 0;
@@ -16,6 +17,9 @@ export class Player {
         this.x = x;
         this.y = y;
 
+        this.lastAttackTime = 0;
+        this.attackCooldownTime = entityMap.PLAYERS.baseAttackCooldown;
+        this.attacking = false;
         this.keys = {w: 0, a: 0, s: 0, d: 0};
 
         ENTITIES.PLAYERS[id] = this;
@@ -32,13 +36,36 @@ export class Player {
         this.resolveCollisions();
         this.clamp();
     }
+    attack() {
+        if (Date.now() - this.lastAttackTime < this.attackCooldownTime || !this.attacking) return;
+        this.lastAttackTime = Date.now();
+        
+        const spawnProjectile = (angleOffset) => {
+            let projectileId = Math.floor(Math.random() * 100000); // Use a larger range for IDs
+            while(projectileId in ENTITIES.PROJECTILES) {
+                projectileId = Math.floor(Math.random() * 100000);
+            }
+
+            const projectileAngle = this.angle + angleOffset;
+            const rad = projectileAngle * Math.PI / 180;
+            const xOffset = Math.cos(rad) * this.radius; // spawn outside player
+            const yOffset = Math.sin(rad) * this.radius; // spawn outside player
+            new Projectile(projectileId, this.x + xOffset, this.y + yOffset, projectileAngle, 1, this);
+        }
+
+        let angle = -60;
+        while (angle <= 60) {
+            spawnProjectile(angle);
+            angle += 30
+        }
+    }
     resolveCollisions() {
         for (const player of Object.values(ENTITIES.PLAYERS)) {
             if (player.id === this.id) continue; // don't check collisions with self.
 
             const distance = Math.sqrt(Math.pow(player.x - this.x, 2) + Math.pow(player.y - this.y, 2));
 
-            // check if touching (minus some)
+            // check if touching
             if (distance <= this.radius + player.radius) {
                 // resolve collision
                 const angle = Math.atan2(player.y - this.y, player.x - this.x);
