@@ -1,7 +1,7 @@
 import { ENTITIES } from './game.js';
-import { entityMap } from './shared/entitymap.js';
+
 import { LC, camera } from './client.js';
-import { TPS } from './shared/entitymap.js';
+import { TPS, entityMap } from './shared/entitymap.js';
 
 export class Mob {
     constructor(id, x, y, type) {
@@ -26,7 +26,7 @@ export class Mob {
         ENTITIES.MOBS[id] = this;
     }
     draw() {
-        const lerpFactor = (TPS.client / TPS.server) / 10;
+        const lerpFactor = (TPS.clientCapped / TPS.server) / 10;
         
         if (typeof this.newX === 'undefined' || typeof this.newY === 'undefined') return;
 

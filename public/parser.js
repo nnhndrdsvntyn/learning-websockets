@@ -89,7 +89,7 @@ export function parsePacket(buffer) {
             ENTITIES.PLAYERS[id].health = health;
             ENTITIES.PLAYERS[id].maxHealth = maxHealth;
             ENTITIES.PLAYERS[id].newAngle = angle;
-            ENTITIES.PLAYERS[id].score = score;
+            ENTITIES.PLAYERS[id].newScore = score;
             ENTITIES.PLAYERS[id].username = username
         }
 
@@ -165,17 +165,30 @@ export function parsePacket(buffer) {
         const entityId = view.getUint32(offset); offset += 4; // entity id to add
         const x = view.getUint16(offset); offset += 2; // x
         const y = view.getUint16(offset); offset += 2; // y
-        if (entityType === 2) { // if its a mob, then look for the type attribute packet.
+        const angle = view.getInt16(offset); offset += 2; // angle
+        if (entityType === 1) {
+            new Player(entityId, x, y);
+        } else if (entityType === 2) {
+            const type = view.getUint8(offset++); // projectile type
+            new Projectile(entityId, x, y, angle, type);
+        } else if (entityType === 3) { // if its a mob, then look for the type attribute packet.
             const type = view.getUint8(offset++); // mob type
             new Mob(entityId, x, y, type);
-            return;
         }
-        if (entityType === 1) new Player(entityId, x, y); return;
+
+        // console.log("add", entityType, entityId);
     } else if (type === 4) { // delete packet
         const entityType = view.getUint8(offset++); // entity type to delete
         const entityId = view.getUint32(offset); offset += 4; // entity id to delete
         
-        if (entityType === 1) delete ENTITIES.PLAYERS[entityId];
-        if (entityType === 2) delete ENTITIES.PROJECTILES[entityId];
+        if (entityType === 1) {
+            delete ENTITIES.PLAYERS[entityId];
+        } else if (entityType === 2) {
+            delete ENTITIES.PROJECTILES[entityId];
+        } else if (entityType === 3) {
+            delete ENTITIES.MOBS[entityId];
+        }
+
+        // console.log("delete", entityType, entityId);
     }
 }

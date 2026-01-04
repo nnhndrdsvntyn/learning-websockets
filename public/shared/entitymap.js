@@ -1,6 +1,7 @@
 // just some constants... doesn't really belong here.
 export const TPS = {
-    client: 60,
+    clientReal: 0,
+    clientCapped: 75,
     server: 20
 }
 

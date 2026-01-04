@@ -21,7 +21,9 @@ export const ENTITIES = {
         id,
         x,
         y,
+        angle,
         type,
+        shooter,
         username,
     }) => {
         if (entityType === 'player') {
@@ -29,9 +31,11 @@ export const ENTITIES = {
             new Player(id, x, y);
             ENTITIES.PLAYERS[id].username = username || ('player' + id); // Default username
             ENTITIES.playerIds.add(id);
-            console.log(ENTITIES.PLAYERS);
-        } else if (entityType === 'mob') {
+        } else if (entityType === 'projectile') {
             entityType = 2;
+            new Projectile(id, x, y, angle, type, shooter);
+        } else if (entityType === 'mob') {
+            entityType = 3;
             new Mob(id, x, y, type);
         }
 
@@ -41,19 +45,20 @@ export const ENTITIES = {
                 return;
             }
             let bufferLength = 10;
-            if (entityType === 2) bufferLength += 1; // add 1 spot for mob type if its a mob
+            if (entityType === 2 || entityType === 3) bufferLength += 3; // add 1 spot 'type' and 2 spots for 'angle' if its a projectile / mob
             const buffer = new ArrayBuffer(bufferLength);
             const view = new DataView(buffer);
             let offset = 0;
 
             view.setUint8(offset++, 3); // add packet
-            view.setUint8(offset++, type); // entity type
+            view.setUint8(offset++, entityType); // entity type
             view.setUint32(offset, id); offset += 4; // entity id
             view.setUint16(offset, x); // x
             offset += 2;
             view.setUint16(offset, y); // y
             offset += 2;
-            if (entityType === 2) view.setUint8(offset++, type); // mob type
+            if (entityType === 2 || entityType === 3) view.setUint16(offset, angle); offset += 2; // angle allocate mem for mob / projectile angle
+            if (entityType === 2 || entityType === 3) view.setUint8(offset++, type); // allocate mem for mob type / projectile type IF it is that type of entity
             client.send(buffer);
         });
     },
@@ -67,6 +72,11 @@ export const ENTITIES = {
         if (type === 'projectile') {
             type = 2;
             delete ENTITIES.PROJECTILES[id];
+        }
+
+        if (type === 'mob') {
+            type = 3;
+            delete ENTITIES.MOBS[id];
         }
         wss.clients.forEach(client => {
             const buffer = new ArrayBuffer(1 + 1 + 4);
@@ -93,7 +103,10 @@ for (let i = 0; i < 100; i++) {
         y = Math.floor(Math.random() * 10000);
         const spawnZone = ENTITIES.STRUCTURES[1]; // Assuming spawn zone is structure with id 1
         const distance = Math.sqrt(Math.pow(x - spawnZone.x, 2) + Math.pow(y - spawnZone.y, 2));
-        if (distance > spawnZone.radius + 100) {
+        // Ensure not near spawn zone and not near map edges (10000x10000 map)
+        if (distance > spawnZone.radius + 100 &&
+            x > 500 && x < 9500 &&
+            y > 500 && y < 9500) {
             validPosition = true;
         }
     }

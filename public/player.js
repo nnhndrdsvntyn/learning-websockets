@@ -1,16 +1,10 @@
 import {
-    LC
-} from './client.js';
-import {
     ENTITIES
 } from './game.js';
 import {
-    myId
+    myId, camera, LC
 } from './client.js';
-import {
-    camera
-} from './client.js';
-import { TPS } from './shared/entitymap.js';
+import { TPS, entityMap } from './shared/entitymap.js';
 
 export class Player {
     constructor(id, x, y) {
@@ -21,7 +15,8 @@ export class Player {
         this.y = y;
         this.newY = y;
 
-        this.score = undefined;
+        this.score = 0;
+        this.newScore = 0;
 
         this.health = undefined;
         this.maxHealth = undefined;
@@ -31,12 +26,12 @@ export class Player {
         this.newAngle = 0;
         this.angle = 0;
 
-        this.radius = 30;
+        this.radius = entityMap.PLAYERS.baseRadius;
 
         ENTITIES.PLAYERS[id] = this;
     }
     draw() {
-        const lerpFactor = (TPS.client / TPS.server) / 10;
+        const lerpFactor = (TPS.clientCapped / TPS.server) / 10;
         
         if (typeof this.newX === 'undefined' || typeof this.newY === 'undefined') return;
 

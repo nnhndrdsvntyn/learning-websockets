@@ -1,6 +1,5 @@
 import { ENTITIES } from './game.js';
 import { entityMap } from '../public/shared/entitymap.js';
-import { Projectile } from './projectile.js';
 
 export class Player {
     constructor(id, x, y) {
@@ -55,7 +54,17 @@ export class Player {
             const rad = projectileAngle * Math.PI / 180;
             const xOffset = Math.cos(rad) * this.radius; // spawn outside player
             const yOffset = Math.sin(rad) * this.radius; // spawn outside player
-            new Projectile(projectileId, this.x + xOffset, this.y + yOffset, projectileAngle, 1, this);
+
+            const shooter = this;
+            ENTITIES.newEntity({
+                entityType: 'projectile',
+                id: projectileId,
+                x: this.x + xOffset,
+                y: this.y + yOffset,
+                angle: projectileAngle,
+                type: 1,
+                shooter: shooter
+            });
         }
 
         spawnProjectile(0);

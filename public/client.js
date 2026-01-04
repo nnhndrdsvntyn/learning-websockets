@@ -21,6 +21,7 @@ export const camera = {
 // window.camera = camera;
 
 export const LC = new LibCanvas();
+LC.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 // window.LC = LC;
 
 // load images
@@ -51,7 +52,7 @@ for (const projectile of Object.values(entityMap.PROJECTILES)) {
 
 export const ws = new WebSocket(`wss://${location.host}`);
 ws.binaryType = 'arraybuffer'
-// window.ws = ws;
+window.ws = ws;
 
 export let myId;
 ws.onopen = () => {
@@ -148,8 +149,13 @@ function render() {
         player.draw();
     }
 
-    // ui
     const localPlayer = ENTITIES.PLAYERS[myId];
+
+    // lerp local player's score
+    const lerpFactor = (TPS.clientCapped / TPS.server) / 10;
+    localPlayer.score = Math.round(localPlayer.score + (localPlayer.newScore - localPlayer.score) * lerpFactor);
+    
+    // ui
     if (localPlayer) {
         const textX = `x: ${localPlayer.x.toFixed(2)}`;
         const textY = `y: ${localPlayer.y.toFixed(2)}`;
@@ -168,7 +174,9 @@ function render() {
         LC.drawText({ text: textY, pos: [15, 25 + metricsX.height + 5], font: '20px Arial', color: 'white' });
         LC.drawText({ text: textScore, pos: [15, 25 + metricsX.height + 5 + metricsY.height + 5], font: '20px Arial', color: 'white' });
     }
-    requestAnimationFrame(render);
+    setTimeout(() => {
+        render();
+    }, 1000 / TPS.clientCapped)
 }
 
 window.addEventListener("mousemove", e => {
@@ -197,8 +205,11 @@ window.addEventListener("mousedown", e => {
     const buffer = new ArrayBuffer(2);
     const view = new DataView(buffer);
 
-    view.setUint8(0, 4); // 4 for set attack packet
-    view.setUint8(1, 1) // 1 for true
+    if (e.button === 0) {
+        view.setUint8(0, 4); // 4 for set attack packet
+        view.setUint8(1, 1) // 1 for true
+    }
+
     ws.send(buffer);
 });
 
@@ -208,8 +219,10 @@ window.addEventListener("mouseup", e => {
     const buffer = new ArrayBuffer(2);
     const view = new DataView(buffer);
 
-    view.setUint8(0, 4); // 4 for set attack packet
-    view.setUint8(1, 0) // 1 for false
+    if (e.button === 0) {
+        view.setUint8(0, 4); // 4 for set attack packet
+        view.setUint8(1, 0) // 1 for false
+    }
     ws.send(buffer);
 });
 
@@ -260,12 +273,12 @@ document.addEventListener('keyup', (e) => {
 
 // update client FPS
 import { TPS } from './shared/entitymap.js';
-// window.TPS = TPS;
+window.TPS = TPS;
 (() => {
     let frames = 0;
     setInterval(() => {
-        TPS.client = frames;
-        // console.log(TPS.client);
+        TPS.clientReal = frames;
+        // console.log(TPS.clientReal);
         frames = 0;
     }, 1000);
 
