@@ -49,7 +49,7 @@ for (const projectile of Object.values(entityMap.PROJECTILES)) {
     });
 }
 
-export const ws = new WebSocket(`wss://${location.host}`);
+export const ws = new WebSocket(`ws://${location.host}`);
 ws.binaryType = 'arraybuffer'
 // window.ws = ws;
 
@@ -76,8 +76,8 @@ ws.onclose = () => {
 
 ws.onmessage = (event) => {
     if (!myId) {
-        myId = event.data
-        // window.myId = myId;
+        myId = parseInt(event.data);
+        window.myId = myId;
         new Player(myId, 5000, 5000);
         camera.target.x = ENTITIES.PLAYERS[myId].x;
         camera.target.y = ENTITIES.PLAYERS[myId].y;
@@ -148,13 +148,26 @@ function render() {
         player.draw();
     }
 
+    // ui
     const localPlayer = ENTITIES.PLAYERS[myId];
-    LC.drawText({
-        text: `x: ${localPlayer.x.toFixed(2)}, y: ${localPlayer.y.toFixed(2)}`,
-        pos: [10, 20],
-        font: '20px Arial',
-        color: 'white'
-    });
+    if (localPlayer) {
+        const textX = `x: ${localPlayer.x.toFixed(2)}`;
+        const textY = `y: ${localPlayer.y.toFixed(2)}`;
+        const textScore = `score: ${localPlayer.score}`;
+
+        const metricsX = LC.measureText({ text: textX, font: '20px Arial' });
+        const metricsY = LC.measureText({ text: textY, font: '20px Arial' });
+        const metricsScore = LC.measureText({ text: textScore, font: '20px Arial' });
+
+        const maxWidth = Math.max(metricsX.width, metricsY.width, metricsScore.width);
+        const totalHeight = metricsX.height + metricsY.height + metricsScore.height + 20; // 10px padding between lines and 10px for top/bottom padding
+
+        LC.drawRect({ pos: [5, 5], size: [maxWidth + 20, totalHeight], color: 'rgba(128, 128, 128, 0.5)', cornerRadius: 5 });
+
+        LC.drawText({ text: textX, pos: [15, 25], font: '20px Arial', color: 'white' });
+        LC.drawText({ text: textY, pos: [15, 25 + metricsX.height + 5], font: '20px Arial', color: 'white' });
+        LC.drawText({ text: textScore, pos: [15, 25 + metricsX.height + 5 + metricsY.height + 5], font: '20px Arial', color: 'white' });
+    }
     requestAnimationFrame(render);
 }
 

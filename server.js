@@ -114,14 +114,14 @@ function update() {
             let bufferLength = 0;
             bufferLength += 1; // packet type
             bufferLength += 1; // player count
-            bufferLength += (playersToSend.length * 11) // id(4) + x(2) + y(2) angle(2) + username length(1)
+            bufferLength += (playersToSend.length * 19) // id(4) + x(2) + y(2) angle(2) + health(2) + maxHealh(2) + score(4) + username length(1)
 
             for (const player of playersToSend) {
                 bufferLength += (player.username).length; // dynamic, based on player's username. so we need a for loop to check for this.
             }
 
             bufferLength += 2; // mob count
-            bufferLength += mobsToSend.length * 11; // id(4) + x(2) + y(2) + angle(2) + type(1)
+            bufferLength += mobsToSend.length * 15; // id(4) + x(2) + y(2) + angle(2) + health(2) + maxHealth(2) + type(1)
             
             bufferLength += 2; // projectile count
             bufferLength += projectilesToSend.length * 11; // id(4) + x(2) + y(2) + angle(2) + type(1)
@@ -140,6 +140,9 @@ function update() {
                 view.setUint16(offset, player.x); offset += 2;
                 view.setUint16(offset, player.y); offset += 2;
                 view.setInt16(offset, player.angle); offset += 2;
+                view.setUint16(offset, player.health); offset += 2;
+                view.setUint16(offset, player.maxHealth); offset += 2;
+                view.setUint32(offset, player.score); offset += 4;
 
                 view.setUint8(offset++, username.length); // username length
                 for (let i = 0; i < username.length; i++) {
@@ -153,6 +156,8 @@ function update() {
                 view.setUint16(offset, mob.x); offset += 2;
                 view.setUint16(offset, mob.y); offset += 2;
                 view.setInt16(offset, mob.angle); offset += 2;
+                view.setUint16(offset, mob.health); offset += 2;
+                view.setUint16(offset, mob.maxHealth); offset += 2;
                 view.setUint8(offset++, mob.type);
             }
 

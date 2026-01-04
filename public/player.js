@@ -21,6 +21,11 @@ export class Player {
         this.y = y;
         this.newY = y;
 
+        this.score = undefined;
+
+        this.health = undefined;
+        this.maxHealth = undefined;
+
         this.username = "";
 
         this.newAngle = 0;
@@ -75,6 +80,29 @@ export class Player {
             size: [this.radius * 2, this.radius * 2],
             rotation: this.angle
         });
+
+        // draw health as bar
+        if (this.health !== undefined && this.maxHealth !== undefined) {
+            const barWidth = this.radius * 2;
+            const barHeight = 5;
+            const healthPercentage = this.health / this.maxHealth;
+
+            // Background of the health bar
+            LC.drawRect({
+                pos: [screenPosX - barWidth / 2, screenPosY + this.radius + 5],
+                size: [barWidth, barHeight],
+                color: 'red',
+                cornerRadius: 2
+            });
+
+            // Foreground of the health bar
+            LC.drawRect({
+                pos: [screenPosX - barWidth / 2, screenPosY + this.radius + 5],
+                size: [barWidth * healthPercentage, barHeight],
+                color: 'lime',
+                cornerRadius: 2
+            });
+        }
 
         // draw username as text
         const usernameText = this.username;

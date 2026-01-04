@@ -19,11 +19,11 @@ export function parsePacket(buffer, wsId) {
 
         if (!ENTITIES.PLAYERS[wsId]) {
             ENTITIES.newEntity({
-                type: 'player',
+                entityType: 'player',
                 id: wsId,
                 x: 5000,
                 y: 5000,
-                username
+                username: username
             });
         } else {
             ENTITIES.PLAYERS[wsId].username = username;

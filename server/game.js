@@ -17,28 +17,32 @@ export const ENTITIES = {
     PROJECTILES: {},
     playerIds: new Set(),
     newEntity: ({
-        type,
+        entityType,
         id,
         x,
         y,
-        username
+        type,
+        username,
     }) => {
-        if (type === 'player') {
-            type = 1;
+        if (entityType === 'player') {
+            entityType = 1;
             new Player(id, x, y);
             ENTITIES.PLAYERS[id].username = username || ('player' + id); // Default username
             ENTITIES.playerIds.add(id);
-        } else if (type === 'mob') {
-            type = 2;
+            console.log(ENTITIES.PLAYERS);
+        } else if (entityType === 'mob') {
+            entityType = 2;
             new Mob(id, x, y, type);
         }
 
         wss.clients.forEach(client => {
-            if (client.id === id && type === 1) {
+            if (client.id === id && entityType === 1) {
                 client.send(buildInitPacket(client.id));
                 return;
             }
-            const buffer = new ArrayBuffer(10);
+            let bufferLength = 10;
+            if (entityType === 2) bufferLength += 1; // add 1 spot for mob type if its a mob
+            const buffer = new ArrayBuffer(bufferLength);
             const view = new DataView(buffer);
             let offset = 0;
 
@@ -49,6 +53,7 @@ export const ENTITIES = {
             offset += 2;
             view.setUint16(offset, y); // y
             offset += 2;
+            if (entityType === 2) view.setUint8(offset++, type); // mob type
             client.send(buffer);
         });
     },

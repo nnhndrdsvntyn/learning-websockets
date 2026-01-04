@@ -1,4 +1,5 @@
 import { ENTITIES } from './game.js';
+import { Player } from './player.js';
 import { entityMap } from '../public/shared/entitymap.js';
 
 export class Mob {
@@ -7,6 +8,11 @@ export class Mob {
 
         this.x = x;
         this.y = y;
+
+        this.score = entityMap.MOBS[type].score;
+
+        this.health = entityMap.MOBS[type].baseHealth;
+        this.maxHealth = entityMap.MOBS[type].baseHealth;
 
         this.angle = 0
         this.radius = entityMap.MOBS[type].radius;
@@ -57,6 +63,23 @@ export class Mob {
         if (this.y < 0 + this.radius) this.y = 0 + this.radius;
         if (this.x > 10000 - this.radius) this.x = 10000 - this.radius;
         if (this.y > 10000 - this.radius) this.y = 10000 - this.radius;
+    }
+    die(killer) {
+        // give the killer score if they're a player (from player class)
+        if (killer instanceof Player) killer.score += this.score;
+        
+        // delete this mob
+        ENTITIES.deleteEntity('mob', this.id);
+
+        // spawn a similar mob somewhere else on the map
+        ENTITIES.newEntity({
+            entityType: 'mob',
+            id: this.id,
+            x: Math.floor(Math.random() * 10000),
+            y: Math.floor(Math.random() * 10000),
+            type: this.type,
+            type: this.type,
+        });
     }
 }
 

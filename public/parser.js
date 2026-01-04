@@ -68,6 +68,9 @@ export function parsePacket(buffer) {
             const x = view.getUint16(offset); offset += 2;
             const y = view.getUint16(offset); offset += 2;
             const angle = view.getInt16(offset); offset += 2;
+            const health = view.getUint16(offset); offset += 2;
+            const maxHealth = view.getUint16(offset); offset += 2;
+            const score = view.getUint32(offset); offset += 4;
 
             let username = '';
             const usernameLength = view.getUint8(offset++);
@@ -83,8 +86,11 @@ export function parsePacket(buffer) {
             // set their data
             ENTITIES.PLAYERS[id].newX = x;
             ENTITIES.PLAYERS[id].newY = y;
+            ENTITIES.PLAYERS[id].health = health;
+            ENTITIES.PLAYERS[id].maxHealth = maxHealth;
             ENTITIES.PLAYERS[id].newAngle = angle;
-            ENTITIES.PLAYERS[id].username = username;
+            ENTITIES.PLAYERS[id].score = score;
+            ENTITIES.PLAYERS[id].username = username
         }
 
         // all players that aren't in this update will have their x and y set to undefined, because they are out of range.
@@ -107,6 +113,8 @@ export function parsePacket(buffer) {
             const x = view.getUint16(offset); offset += 2;
             const y = view.getUint16(offset); offset += 2;
             const angle = view.getInt16(offset); offset += 2;
+            const health = view.getUint16(offset); offset += 2;
+            const maxHealth = view.getUint16(offset); offset += 2;
             const type = view.getUint8(offset++);
 
             if (!ENTITIES.MOBS[id]) {
@@ -117,6 +125,8 @@ export function parsePacket(buffer) {
             mob.newX = x;
             mob.newY = y;
             mob.newAngle = angle;
+            mob.health = health;
+            mob.maxHealth = maxHealth;
         }
 
         for (const mob of Object.values(ENTITIES.MOBS)) {
@@ -154,9 +164,13 @@ export function parsePacket(buffer) {
         const entityType = view.getUint8(offset++); // entity type to add
         const entityId = view.getUint32(offset); offset += 4; // entity id to add
         const x = view.getUint16(offset); offset += 2; // x
-        const y = view.getUint16(offset); // y
-
-        if (entityType === 1) new Player(entityId, x, y);
+        const y = view.getUint16(offset); offset += 2; // y
+        if (entityType === 2) { // if its a mob, then look for the type attribute packet.
+            const type = view.getUint8(offset++); // mob type
+            new Mob(entityId, x, y, type);
+            return;
+        }
+        if (entityType === 1) new Player(entityId, x, y); return;
     } else if (type === 4) { // delete packet
         const entityType = view.getUint8(offset++); // entity type to delete
         const entityId = view.getUint32(offset); offset += 4; // entity id to delete

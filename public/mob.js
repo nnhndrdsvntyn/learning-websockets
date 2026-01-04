@@ -13,6 +13,9 @@ export class Mob {
         this.y = y;
         this.newY = y;
 
+        this.health = undefined;
+        this.maxHealth = undefined
+
         this.angle = 0
         this.newAngle = 0;
         
@@ -65,6 +68,29 @@ export class Mob {
             pos: [screenPosX - this.radius * (proportions[0] / 2), screenPosY - this.radius * (proportions[1] / 2)],
             size: [proportions[0] * this.radius, proportions[1] * this.radius],
             rotation: this.angle
-        })
+        });
+
+        // draw health as bar
+        if (this.health !== undefined && this.maxHealth !== undefined) {
+            const barWidth = this.radius * 2;
+            const barHeight = 5;
+            const healthPercentage = this.health / this.maxHealth;
+
+            // Background of the health bar
+            LC.drawRect({
+                pos: [screenPosX - barWidth / 2, screenPosY + this.radius * (proportions[1] / 2) + 5],
+                size: [barWidth, barHeight],
+                color: 'red',
+                cornerRadius: 2
+            });
+
+            // Foreground of the health bar
+            LC.drawRect({
+                pos: [screenPosX - barWidth / 2, screenPosY + this.radius * (proportions[1] / 2) + 5],
+                size: [barWidth * healthPercentage, barHeight],
+                color: 'lime',
+                cornerRadius: 2
+            });
+        }
     }
 }

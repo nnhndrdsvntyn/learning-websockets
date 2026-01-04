@@ -28,6 +28,17 @@ export class Projectile {
         this.resolveCollisions();
     }
     resolveCollisions() {
+        // check structures
+        for (const id in ENTITIES.STRUCTURES) {
+            const structure = ENTITIES.STRUCTURES[id];
+            const distance = Math.sqrt(Math.pow(structure.x - this.x, 2) + Math.pow(structure.y - this.y, 2));
+
+            if (distance <= structure.radius + this.radius) {
+                ENTITIES.deleteEntity('projectile', this.id);
+                return;
+            }
+        }
+        
         // check with players
         for (const id in ENTITIES.PLAYERS) {
             const player = ENTITIES.PLAYERS[id];
@@ -36,11 +47,18 @@ export class Projectile {
             const distance = Math.sqrt(Math.pow(player.x - this.x, 2) + Math.pow(player.y - this.y, 2));
 
             if (distance <= player.radius + this.radius) {
+                // damage player
+                player.health -= entityMap.PROJECTILES[this.type].damage;
                 // knock player back
                 const knockbackAngle = Math.atan2(player.y - this.shooter.y, player.x - this.shooter.x);
                 player.x += Math.cos(knockbackAngle) * 10;
                 player.y += Math.sin(knockbackAngle) * 10;
                 ENTITIES.deleteEntity('projectile', this.id);
+
+                // check if player should die, and kill them.
+                if (player.health <= 0) {
+                    player.die(this.shooter);
+                }
                 return;
             }
         }
@@ -52,21 +70,19 @@ export class Projectile {
             const distance = Math.sqrt(Math.pow(mob.x - this.x, 2) + Math.pow(mob.y - this.y, 2));
 
             if (distance <= mob.radius + this.radius) {
+                // damage mob
+                mob.health -= entityMap.PROJECTILES[this.type].damage;
+
                 // knock mob back
                 const knockbackAngle = Math.atan2(mob.y - this.shooter.y, mob.x - this.shooter.x);
                 mob.x += Math.cos(knockbackAngle) * entityMap.PROJECTILES[this.type].knockbackStrength;
                 mob.y += Math.sin(knockbackAngle) * entityMap.PROJECTILES[this.type].knockbackStrength;
                 ENTITIES.deleteEntity('projectile', this.id);
-                return;
-            }
-        }
-        // check structures
-        for (const id in ENTITIES.STRUCTURES) {
-            const structure = ENTITIES.STRUCTURES[id];
-            const distance = Math.sqrt(Math.pow(structure.x - this.x, 2) + Math.pow(structure.y - this.y, 2));
 
-            if (distance <= structure.radius + this.radius) {
-                ENTITIES.deleteEntity('projectile', this.id);
+                // check if mob should die, and kill them.
+                if (mob.health <= 0) {
+                    mob.die(this.shooter);
+                }
                 return;
             }
         }

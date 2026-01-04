@@ -11,6 +11,11 @@ export class Player {
 
         this.angle = 0;
 
+        this.health = 100;
+        this.maxHealth = 100;
+
+        this.score = 0;
+
         this.username;
         this.chatMessage;
 
@@ -53,11 +58,7 @@ export class Player {
             new Projectile(projectileId, this.x + xOffset, this.y + yOffset, projectileAngle, 1, this);
         }
 
-        let angle = -60;
-        while (angle <= 60) {
-            spawnProjectile(angle);
-            angle += 30
-        }
+        spawnProjectile(0);
     }
     resolveCollisions() {
         for (const player of Object.values(ENTITIES.PLAYERS)) {
@@ -84,5 +85,18 @@ export class Player {
         if (this.y < 0 + this.radius) this.y = 0 + this.radius;
         if (this.x > 10000 - this.radius) this.x = 10000 - this.radius;
         if (this.y > 10000 - this.radius) this.y = 10000 - this.radius;
+    }
+    die(killer) {
+        // give killer score if they are a player
+        if (killer instanceof Player) killer.score += this.score;
+        
+        this.health = 100;
+        this.maxHealth = 100;
+
+        this.x = 5000;
+        this.y = 5000;
+        this.score = 0; // reset score
+        this.attacking = false;
+        this.keys = {w: 0, a: 0, s: 0, d: 0};
     }
 }
