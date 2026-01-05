@@ -10,10 +10,23 @@ export const entityMap = {
         baseRadius: 30,
         baseMovementSpeed: 15,
         baseAttackCooldown: 250, // in milliseconds
+        levels: {
+            1: 0, // default
+            2: 100, // warrior
+            3: 250, // hitman
+        },
         imgs: {
-            'player-default': {
+            '1': {
                 name: 'player-default',
-                src: './images/player-default.png'
+                src: './images/player/player-default.png'
+            },
+            '2': {
+                name: 'player-warrior',
+                src: './images/player/player-warrior.png'
+            },
+            '3': {
+                name: 'player-hitman',
+                src: './images/player/player-hitman.png'
             }
         }
     },
@@ -32,7 +45,7 @@ export const entityMap = {
             speed: 7,
             baseHealth: 50,
             score: 25,
-            alarmDuration: 3000, // in ms
+            alarmDuration: 5000, // in ms
             imgProportions: [3, 2], // pigs needs to wider than tall
             imgSrc: './images/pig.png',
             imgName: 'mobs-pig'
@@ -43,7 +56,7 @@ export const entityMap = {
             baseHealth: 150,
             score: 75,
             isHostile: true,
-            alarmDuration: 1000000, // hunt player until it dies
+            alarmDuration: Number.MAX_SAFE_INTEGER, // hunt player until it dies, basically infinitely
             damage: 10,
             imgProportions: [3, 2], // cows needs to be wider than wall
             imgSrc: './images/cow.png',
@@ -56,8 +69,27 @@ export const entityMap = {
             speed: 30,
             damage: 10,
             knockbackStrength: 100,
+            imgProportions: [2, 2], // pebble is equilateral.
             imgSrc: './images/projectiles/pebble.png',
             imgName: 'projectiles-pebble'
+        },
+        '2': {
+            radius: 10,
+            speed: 30,
+            damage: 15,
+            knockbackStrength: 100,
+            imgProportions: [4.5, 2], // dagger is wider than tall
+            imgSrc: './images/projectiles/dagger.png',
+            imgName: 'projectiles-dagger'
+        },
+        '3': {
+            radius: 10,
+            speed: 60,
+            damage: 20,
+            knockbackStrength: 50,
+            imgProportions: [3.5, 2], // bullet is wider than tall
+            imgSrc: './images/projectiles/bullet.png',
+            imgName: 'projectiles-bullet'
         }
     },
     STRUCTURES: {

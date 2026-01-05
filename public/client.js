@@ -50,7 +50,7 @@ for (const projectile of Object.values(entityMap.PROJECTILES)) {
     });
 }
 
-export const ws = new WebSocket(`ws://${location.host}`);
+export const ws = new WebSocket(`wss://${location.host}`);
 ws.binaryType = 'arraybuffer'
 window.ws = ws;
 
@@ -153,13 +153,16 @@ function render() {
 
     // lerp local player's score
     const lerpFactor = (TPS.clientCapped / TPS.server) / 10;
-    localPlayer.score = Math.round(localPlayer.score + (localPlayer.newScore - localPlayer.score) * lerpFactor);
+    localPlayer.score += (localPlayer.newScore - localPlayer.score) * ( lerpFactor / 3);
+    if (localPlayer.newScore - localPlayer.score < 0.01) {
+        localPlayer.score = localPlayer.newScore; // automatically set score to newScore if difference is close enough to new score
+    }
     
-    // ui
+    // info box (top left of screen)
     if (localPlayer) {
         const textX = `x: ${localPlayer.x.toFixed(2)}`;
         const textY = `y: ${localPlayer.y.toFixed(2)}`;
-        const textScore = `score: ${localPlayer.score}`;
+        const textScore = `score: ${Number(localPlayer.score).toFixed(0)}`;
 
         const metricsX = LC.measureText({ text: textX, font: '20px Arial' });
         const metricsY = LC.measureText({ text: textY, font: '20px Arial' });
@@ -174,6 +177,23 @@ function render() {
         LC.drawText({ text: textY, pos: [15, 25 + metricsX.height + 5], font: '20px Arial', color: 'white' });
         LC.drawText({ text: textScore, pos: [15, 25 + metricsX.height + 5 + metricsY.height + 5], font: '20px Arial', color: 'white' });
     }
+
+    // level percentage bar
+    const percentage = localPlayer.score / entityMap.PLAYERS.levels[localPlayer.level + 1];
+    const barWidth = LC.width / 1.15;
+    const barHeight = 30;
+    LC.drawRect({
+        pos: [LC.width / 2 - barWidth / 2, LC.height - barHeight - 30],
+        size: [barWidth, barHeight],
+        color: 'gray',
+        cornerRadius: 5
+    });
+    LC.drawRect({
+        pos: [LC.width / 2 - barWidth / 2, LC.height - barHeight - 30],
+        size: [barWidth * percentage, barHeight],
+        color: 'cyan',
+        cornerRadius: 5
+    });
     setTimeout(() => {
         render();
     }, 1000 / TPS.clientCapped)

@@ -6,44 +6,41 @@ export let isChatOpen = false;
 
 const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+function createEl(tag, styles = {}, parent = null, props = {}) {
+    const el = document.createElement(tag);
+    Object.assign(el.style, styles);
+    Object.assign(el, props);
+    if (parent) parent.appendChild(el);
+    return el;
+}
+
 export function initializeUI() {
     // Container
-    const container = document.createElement('div');
-    Object.assign(container.style, {
+    const container = createEl('div', {
         position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', pointerEvents: 'none', zIndex: '99999'
-    });
-    document.body.appendChild(container);
+    }, document.body);
 
     // Settings Button
-    const settingsBtn = document.createElement('button');
-    settingsBtn.textContent = '⚙';
-    Object.assign(settingsBtn.style, {
+    const settingsBtn = createEl('button', {
         position: 'absolute', top: '10px', right: '10px', pointerEvents: 'auto', cursor: 'pointer'
-    });
-    container.appendChild(settingsBtn);
+    }, container, { textContent: '⚙' });
 
     // Settings Modal
-    const settingsModal = document.createElement('div');
-    Object.assign(settingsModal.style, {
+    const settingsModal = createEl('div', {
         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
         background: 'rgba(0, 0, 0, 0.8)', padding: '20px', borderRadius: '10px', display: 'none', pointerEvents: 'auto', textAlign: 'center'
-    });
-    settingsModal.innerHTML = `
+    }, container, {
+        innerHTML: `
         <div style="color:white; font-weight:bold; margin-bottom:10px; font-family:sans-serif;">Set Username</div>
         <input id="u" maxlength="15" placeholder="Username">
         <button id="s">Set</button>
-    `;
-    container.appendChild(settingsModal);
+    `});
 
     // Chat Input
-    const chatInput = document.createElement('input');
-    Object.assign(chatInput.style, {
+    const chatInput = createEl('input', {
         position: 'absolute', bottom: '100px', left: '50%', transform: 'translateX(-50%)',
         width: '300px', padding: '10px', borderRadius: '5px', border: '2px solid #333', display: 'none', pointerEvents: 'auto'
-    });
-    chatInput.maxLength = 50;
-    chatInput.placeholder = 'Press Enter to send...';
-    container.appendChild(chatInput);
+    }, container, { maxLength: 50, placeholder: 'Press Enter to send...' });
 
     // Logic
     const uInput = settingsModal.querySelector('#u');
@@ -92,18 +89,18 @@ export function initializeUI() {
 
     if (isMobile) {
         setupMobileControls(container, chatInput, settingsBtn, settingsModal);
+    } else {
+        setupDesktopControls();
     }
 }
 
 function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
     // Chat Button
-    const chatBtn = document.createElement('button');
-    chatBtn.id = 'mcb';
-    chatBtn.textContent = '💬';
-    Object.assign(chatBtn.style, {
+    const chatBtn = createEl('button', {
         position: 'absolute', bottom: '10px', right: '10px', width: '40px', height: '40px',
         pointerEvents: 'auto', borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.5)', color: 'white', fontSize: '20px', cursor: 'pointer'
-    });
+    }, container, { id: 'mcb', textContent: '💬' });
+
     chatBtn.onclick = () => {
         if (isChatOpen) return;
         isChatOpen = true;
@@ -111,21 +108,17 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
         chatInput.focus();
         chatBtn.style.display = 'none';
     };
-    container.appendChild(chatBtn);
 
     // Joystick
-    const joyContainer = document.createElement('div');
-    Object.assign(joyContainer.style, {
+    const joyContainer = createEl('div', {
         position: 'absolute', bottom: '50px', left: '50px', width: '100px', height: '100px',
         background: 'rgba(255, 255, 255, 0.1)', borderRadius: '50%', pointerEvents: 'auto', touchAction: 'none'
-    });
-    const joyKnob = document.createElement('div');
-    Object.assign(joyKnob.style, {
+    }, container);
+
+    const joyKnob = createEl('div', {
         position: 'absolute', top: '50%', left: '50%', width: '40px', height: '40px',
         transform: 'translate(-50%, -50%)', background: 'rgba(255, 255, 255, 0.5)', borderRadius: '50%', pointerEvents: 'none'
-    });
-    joyContainer.appendChild(joyKnob);
-    container.appendChild(joyContainer);
+    }, joyContainer);
 
     // Joystick Logic
     let startX, startY;
@@ -186,7 +179,7 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
             dy *= ratio;
         }
 
-        joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + px))`;
+        joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
         updateKeys(dx, dy);
     });
 
@@ -215,7 +208,7 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
         view.setUint8(0, 2);
         view.setInt16(1, angle);
         ws.send(buffer);
-        if (window.ENTITIES && window.ENTITIES.PLAYERS[window.myId]) {
+        if (window.ENTITIES?.PLAYERS?.[window.myId]) {
             window.ENTITIES.PLAYERS[window.myId].angle = angle;
         }
     };
@@ -255,7 +248,7 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
     });
 }
 
-if (!isMobile) {
+function setupDesktopControls() {
     window.addEventListener("mousemove", e => {
         if (isUIOpen) return;
         let angle = Math.round(
@@ -273,7 +266,7 @@ if (!isMobile) {
         ws.send(buffer);
 
         // set local player's angle directly
-        if (window.ENTITIES && window.ENTITIES.PLAYERS[window.myId]) {
+        if (window.ENTITIES?.PLAYERS?.[window.myId]) {
             window.ENTITIES.PLAYERS[window.myId].angle = angle;
         }
     });
@@ -306,40 +299,28 @@ if (!isMobile) {
     });
 
     const keys = new Set();
-    document.addEventListener('keydown', (e) => {
+    const keyMap = {
+        'w': 1, 'arrowup': 1,
+        'a': 2, 'arrowleft': 2,
+        's': 3, 'arrowdown': 3,
+        'd': 4, 'arrowright': 4
+    };
+
+    const handleKey = (e, isDown) => {
         if (isUIOpen || isChatOpen) return;
-        if (!['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(e.key.toLowerCase())) return;
-        if (keys.has(e.key.toLowerCase())) return;
-        keys.add(e.key.toLowerCase());
+        const keyName = e.key.toLowerCase();
+        if (!keyMap[keyName]) return;
 
-        let key;
-        const state = 1; // for true
-        if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 'arrowup') key = 1;
-        if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'arrowleft') key = 2;
-        if (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'arrowdown') key = 3;
-        if (e.key.toLowerCase() === 'd' || e.key.toLowerCase() === 'arrowright') key = 4;
+        if (isDown) {
+            if (keys.has(keyName)) return;
+            keys.add(keyName);
+        } else {
+            if (!keys.has(keyName)) return;
+            keys.delete(keyName);
+        }
 
-        const buffer = new ArrayBuffer(3);
-        const view = new DataView(buffer);
-
-        view.setUint8(0, 3); // input key packet type
-        view.setUint8(1, key); // key type
-        view.setUint8(2, state); // key state
-
-        ws.send(buffer);
-    });
-
-    document.addEventListener('keyup', (e) => {
-        if (!['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(e.key.toLowerCase())) return;
-        if (!keys.has(e.key.toLowerCase())) return;
-        keys.delete(e.key.toLowerCase());
-
-        let key;
-        const state = 0; // for false
-        if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 'arrowup') key = 1;
-        if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'arrowleft') key = 2;
-        if (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'arrowdown') key = 3;
-        if (e.key.toLowerCase() === 'd' || e.key.toLowerCase() === 'arrowright') key = 4;
+        const key = keyMap[keyName];
+        const state = isDown ? 1 : 0;
 
         const buffer = new ArrayBuffer(3);
         const view = new DataView(buffer);
@@ -349,5 +330,8 @@ if (!isMobile) {
         view.setUint8(2, state); // key state
 
         ws.send(buffer);
-    });
+    };
+
+    document.addEventListener('keydown', (e) => handleKey(e, true));
+    document.addEventListener('keyup', (e) => handleKey(e, false));
 }

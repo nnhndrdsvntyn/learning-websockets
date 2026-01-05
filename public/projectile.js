@@ -46,13 +46,15 @@ export class Projectile {
         // keep angle within range
         this.angle = ((this.angle + 180) % 360 + 360) % 360 - 180;
         
+        let proportions = { ... entityMap.PROJECTILES[this.type].imgProportions };
+
         LC.drawImage({
             name: entityMap.PROJECTILES[this.type].imgName,
-            pos: [screenPosX - this.radius, screenPosY - this.radius],
+            pos: [screenPosX - this.radius * (proportions[0] / 2), screenPosY - this.radius * (proportions[1] / 2)],
             angle: this.angle,
-            size: [this.radius * 2, this.radius * 2],
+            size: [proportions[0] * this.radius, proportions[1] * this.radius],
             rotation: this.angle,
-        })
+        });
         
         /*
         LC.drawCircle({

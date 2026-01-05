@@ -12,7 +12,8 @@ export class Player {
         this.health = 100;
         this.maxHealth = 100;
 
-        this.score = 0;
+        this.score = 10;
+        this.level = 1;
 
         this.lastDamagedTime = 0;
         this.lastDiedTime = 0;
@@ -30,15 +31,6 @@ export class Player {
 
         ENTITIES.PLAYERS[id] = this;
     }
-    damage(health) {
-        if (performance.now() - this.lastDamagedTime < 250) return; // invulnerable for 500ms
-
-        this.lastDamagedTime = performance.now();
-        this.health -= health;
-        if (this.health <= 0) {
-            this.die();
-        }
-    }
     move() {
         const oldX = this.x;
         const oldY = this.y;
@@ -47,9 +39,6 @@ export class Player {
         if (this.keys['a']) this.x -= this.speed;
         if (this.keys['s']) this.y += this.speed;
         if (this.keys['d']) this.x += this.speed;
-
-        this.resolveCollisions();
-        this.clamp();
     }
     attack() {
         if (Date.now() - this.lastAttackTime < this.attackCooldownTime || !this.attacking) return;
@@ -72,7 +61,7 @@ export class Player {
                 x: shooter.x + xOffset,
                 y: shooter.y + yOffset,
                 angle: projectileAngle,
-                type: 1,
+                type: this.level,
                 shooter: shooter
             });
         }
@@ -105,12 +94,31 @@ export class Player {
         if (this.x > 10000 - this.radius) this.x = 10000 - this.radius;
         if (this.y > 10000 - this.radius) this.y = 10000 - this.radius;
     }
+    addScore(points) {
+        // determine new level
+        for (const level in entityMap.PLAYERS.levels) {
+            if (this.score + points >= entityMap.PLAYERS.levels[level]) {
+                this.level = parseInt(level);
+            }
+        }
+        
+        this.score += points;
+    }
+    damage(health) {
+        if (performance.now() - this.lastDamagedTime < 250) return; // invulnerable for 500ms
+
+        this.lastDamagedTime = performance.now();
+        this.health -= health;
+        if (this.health <= 0) {
+            this.die();
+        }
+    }
     die(killer) {
         // set last died time
         this.lastDiedTime = performance.now();
         
         // give killer score if they are a player
-        if (killer instanceof Player) killer.score += this.score;
+        if (killer instanceof Player) killer.addScore(this.score);
         
         this.health = 100;
         this.maxHealth = 100;
@@ -120,5 +128,11 @@ export class Player {
         this.score = 0; // reset score
         this.attacking = false;
         this.keys = {w: 0, a: 0, s: 0, d: 0};
+    }
+    process() {
+        this.move();
+        this.resolveCollisions();
+        this.clamp();
+        this.attack();
     }
 }

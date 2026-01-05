@@ -19,6 +19,8 @@ export class Player {
         this.score = 0;
         this.newScore = 0;
 
+        this.level = 1;
+
         this.health = undefined;
         this.maxHealth = undefined;
 
@@ -72,7 +74,7 @@ export class Player {
 
         // actual image
         LC.drawImage({
-            name: 'player-default',
+            name: entityMap.PLAYERS.imgs[this.level].name,
             pos: [screenPosX - this.radius, screenPosY - this.radius],
             size: [this.radius * 2, this.radius * 2],
             rotation: this.angle
@@ -123,7 +125,7 @@ export class Player {
         }
 
         // draw username as text
-        const usernameText = this.username;
+        const usernameText = `${this.level} | ${this.username}`;
         const usernameMetrics = LC.measureText({ text: usernameText, font: 'bold 16px Arial' });
         let idText = "";
         let idMetrics = { width: 0 };

@@ -56,16 +56,15 @@ wss.on('connection', (ws) => {
 
 // main update loop
 function update() {
-    // move players
+    // process players
     for (const id in ENTITIES.PLAYERS) {
         const player = ENTITIES.PLAYERS[id];
-        player.move();
-        player.attack();
+        player.process();
     }
-    // move mobs
+    // process mobs
     for (const id in ENTITIES.MOBS) {
         const mob = ENTITIES.MOBS[id];
-        mob.move();
+        mob.process();
     }
     // move projectiles
     for (const id in ENTITIES.PROJECTILES) {
@@ -121,7 +120,7 @@ function update() {
             let bufferLength = 0;
             bufferLength += 1; // packet type
             bufferLength += 1; // player count
-            bufferLength += (playersToSend.length * 20) // id(4) + x(2) + y(2) angle(2) + health(2) + maxHealh(2) + score(4) + username length(1) + chat message length(1)
+            bufferLength += (playersToSend.length * 21) // id(4) + x(2) + y(2) angle(2) + health(2) + maxHealh(2) + score(4) + level(1) + username length(1) + chat message length(1)
 
             for (const player of playersToSend) {
                 bufferLength += Buffer.byteLength(player.username); // dynamic, based on player's username. so we need a for loop to check for this.
@@ -155,6 +154,7 @@ function update() {
                 view.setUint16(offset, player.health); offset += 2;
                 view.setUint16(offset, player.maxHealth); offset += 2;
                 view.setUint32(offset, player.score); offset += 4;
+                view.setUint8(offset++, player.level);
 
                 const usernameBuf = Buffer.from(username);
                 view.setUint8(offset++, usernameBuf.length); // username length

@@ -14,29 +14,26 @@ export class Mob {
         this.health = entityMap.MOBS[type].baseHealth;
         this.maxHealth = entityMap.MOBS[type].baseHealth;
 
-        this.angle = 0
+        this.angle = Math.floor(Math.random() * 361) - 180;
         this.radius = entityMap.MOBS[type].radius;
         this.speed = entityMap.MOBS[type].speed;
 
-        this.huntAimInterval = null;
         this.isAlarmed = false;
         this.startHuntingTime = 0;
+        this.lastTurnTime = 0
+        this.nextTurnDelay = Math.floor(Math.random() * 3001) + 3000;
         this.target = null;
         this.alarmDuration = entityMap.MOBS[type].alarmDuration;
 
         this.type = type;
 
         ENTITIES.MOBS[id] = this;
-
-        this.turn();
     }
     move() {
         const rad = this.angle * Math.PI / 180;
         // move
         this.x += Math.cos(rad) * this.speed;
-        this.y += Math.sin(rad) * this.speed
-        this.resolveCollisions();
-        this.clamp();
+        this.y += Math.sin(rad) * this.speed;
     }
     resolveCollisions() {
         // check collisions with players
@@ -64,12 +61,27 @@ export class Mob {
         }
     }
     turn() {
-        if (this.huntAimInterval) return; // don't turn if hunting a player
-        
-        this.angle = Math.floor(Math.random() * 361) - 180; // rand angle between -180 and 180 (inclusive)
-        setTimeout(() => {
-            this.turn();
-        }, Math.floor(Math.random() * 3001) + 3000) // every 3-6 seconds
+        if (this.isAlarmed) {
+            if (this.target && entityMap.MOBS[this.type].isHostile) { // turn towards target if hostile
+                this.angle = Math.atan2(this.target.y - this.y, this.target.x - this.x) * 180 / Math.PI;
+                return; // don't run code after this
+            } else if (this.target && !entityMap.MOBS[this.type].isHostile) { // turn away from target if not hostile
+                this.angle = Math.atan2(this.y - this.target.y, this.x - this.target.x) * 180 / Math.PI;
+                return; // don't run code after this
+            } else {
+                // no target, stop being alarmed and reset speed
+                this.isAlarmed = false;
+                this.speed = entityMap.MOBS[this.type].speed;
+                return;
+            }
+        } else {
+            if (performance.now() - this.lastTurnTime > this.nextTurnDelay) {
+                this.angle = Math.floor(Math.random() * 361) - 180; // rand angle between -180 and 180 (inclusive)
+                this.lastTurnTime = performance.now();
+
+                this.nextTurnDelay = Math.floor(Math.random() * 3001) + 3000;
+            }
+        }
     }
     clamp() {
         // clamp inside map bounds
@@ -82,53 +94,17 @@ export class Mob {
         this.target = shooter;
         
         if (this.isAlarmed) return; // already alarmed
+        
         this.isAlarmed = true;
         this.startHuntingTime = performance.now();
+
         // speed boost
-        this.speed = entityMap.MOBS[this.type].speed * 2.5;
+        this.speed = entityMap.MOBS[this.type].speed * 1.5;
         
-        const isHostile = entityMap.MOBS[this.type].isHostile;
-        if (isHostile) {
-            // turn towards shooter and chase
-            this.huntAimInterval = setInterval(() => {
-                // constantly update angle to chase shooter
-                if (this.target.lastDiedTime > this.startHuntingTime) {
-                    // clear target
-                    this.target = null;
-                    this.speed = entityMap.MOBS[this.type].speed; // reset speed
-                    
-                    this.isAlarmed = false; // stop being alarmed if the player died
-                    clearInterval(this.huntAimInterval);
-                    this.huntAimInterval = null;
-                    this.turn(); // start wandering again
-                    return;
-                }
-                this.angle = Math.atan2(this.target.y - this.y, this.target.x - this.x) * 180 / Math.PI;
-            }, 100);
-        } else {
-            // turn away from shooter once and run
-            this.angle = Math.atan2(this.y - shooter.y, this.x - shooter.x) * 180 / Math.PI;
-            this.isAlarmed = false; // non-hostile mobs don't stay alarmed
-        }
-
-        // stop hunting / running away after 3 seconds
-        setTimeout(() => {
-            // stop the aim interval if exists (for mobs that hunt);
-            if (this.huntAimInterval) {
-                clearInterval(this.huntAimInterval);
-                this.huntAimInterval = null;
-            }
-
-            // make it not alarmed anymore in case it still was
-            this.isAlarmed = false;
-
-            // reset speed
-            this.speed = entityMap.MOBS[this.type].speed;
-        }, this.alarmDuration);
     }
     die(killer) {
         // give the killer score if they're a player (from player class)
-        if (killer instanceof Player) killer.score += this.score;
+        if (killer instanceof Player) killer.addScore(this.score);
         
         // delete this mob
         ENTITIES.deleteEntity('mob', this.id);
@@ -140,8 +116,34 @@ export class Mob {
             x: Math.floor(Math.random() * 10000),
             y: Math.floor(Math.random() * 10000),
             type: this.type,
-            type: this.type,
         });
+    }
+    process() {
+        const currentTime = performance.now();
+
+        if (this.isAlarmed) {
+            if (currentTime - this.startHuntingTime > this.alarmDuration) {
+                this.isAlarmed = false;
+                this.speed = entityMap.MOBS[this.type].speed;
+                this.target = null;
+            } else if (this.target) {
+                if (entityMap.MOBS[this.type].isHostile) {
+                    if (this.target.lastDiedTime > this.startHuntingTime) {
+                        this.isAlarmed = false;
+                        this.speed = entityMap.MOBS[this.type].speed;
+                        this.target = null;
+                    }
+                }
+            } else {
+                this.isAlarmed = false;
+                this.speed = entityMap.MOBS[this.type].speed;
+            }
+        }
+        // main stuff
+        this.turn();
+        this.move();
+        this.resolveCollisions();
+        this.clamp();
     }
 }
 
