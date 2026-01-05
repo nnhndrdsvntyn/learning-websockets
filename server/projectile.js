@@ -54,7 +54,7 @@ export class Projectile {
                 player.x += Math.cos(knockbackAngle) * 10;
                 player.y += Math.sin(knockbackAngle) * 10;
                 player.clamp();
-                // ENTITIES.deleteEntity('projectile', this.id);
+                ENTITIES.deleteEntity('projectile', this.id);
 
                 // check if player should die, and kill them.
                 if (player.health <= 0) {
@@ -79,6 +79,7 @@ export class Projectile {
                 mob.x += Math.cos(knockbackAngle) * entityMap.PROJECTILES[this.type].knockbackStrength;
                 mob.y += Math.sin(knockbackAngle) * entityMap.PROJECTILES[this.type].knockbackStrength;
                 mob.clamp();
+                mob.alarm(this.shooter);
                 ENTITIES.deleteEntity('projectile', this.id);
 
                 // check if mob should die, and kill them.

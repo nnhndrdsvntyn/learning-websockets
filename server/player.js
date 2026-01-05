@@ -1,6 +1,5 @@
 import { ENTITIES } from './game.js';
 import { entityMap } from '../public/shared/entitymap.js';
-
 export class Player {
     constructor(id, x, y) {
         this.id = id;
@@ -15,8 +14,11 @@ export class Player {
 
         this.score = 0;
 
+        this.lastDamagedTime = 0;
+        this.lastDiedTime = 0;
+
         this.username;
-        this.chatMessage;
+        this.chatMessage = '';
 
         this.x = x;
         this.y = y;
@@ -27,6 +29,15 @@ export class Player {
         this.keys = {w: 0, a: 0, s: 0, d: 0};
 
         ENTITIES.PLAYERS[id] = this;
+    }
+    damage(health) {
+        if (performance.now() - this.lastDamagedTime < 250) return; // invulnerable for 500ms
+
+        this.lastDamagedTime = performance.now();
+        this.health -= health;
+        if (this.health <= 0) {
+            this.die();
+        }
     }
     move() {
         const oldX = this.x;
@@ -44,30 +55,29 @@ export class Player {
         if (Date.now() - this.lastAttackTime < this.attackCooldownTime || !this.attacking) return;
         this.lastAttackTime = Date.now();
         
-        const spawnProjectile = (angleOffset) => {
+        const spawnProjectile = (angleOffset, shooter) => {
             let projectileId = Math.floor(Math.random() * 100000); // Use a larger range for IDs
             while(projectileId in ENTITIES.PROJECTILES) {
                 projectileId = Math.floor(Math.random() * 100000);
             }
 
-            const projectileAngle = this.angle + angleOffset;
+            const projectileAngle = shooter.angle + angleOffset;
             const rad = projectileAngle * Math.PI / 180;
-            const xOffset = Math.cos(rad) * this.radius; // spawn outside player
-            const yOffset = Math.sin(rad) * this.radius; // spawn outside player
+            const xOffset = Math.cos(rad) * shooter.radius; // spawn outside player
+            const yOffset = Math.sin(rad) * shooter.radius; // spawn outside player
 
-            const shooter = this;
             ENTITIES.newEntity({
                 entityType: 'projectile',
                 id: projectileId,
-                x: this.x + xOffset,
-                y: this.y + yOffset,
+                x: shooter.x + xOffset,
+                y: shooter.y + yOffset,
                 angle: projectileAngle,
                 type: 1,
                 shooter: shooter
             });
         }
 
-        spawnProjectile(0);
+        spawnProjectile(0, this);
     }
     resolveCollisions() {
         for (const player of Object.values(ENTITIES.PLAYERS)) {
@@ -96,6 +106,9 @@ export class Player {
         if (this.y > 10000 - this.radius) this.y = 10000 - this.radius;
     }
     die(killer) {
+        // set last died time
+        this.lastDiedTime = performance.now();
+        
         // give killer score if they are a player
         if (killer instanceof Player) killer.score += this.score;
         

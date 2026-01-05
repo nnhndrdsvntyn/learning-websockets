@@ -8,7 +8,7 @@ export const TPS = {
 export const entityMap = {
     PLAYERS: {
         baseRadius: 30,
-        baseMovementSpeed: 20,
+        baseMovementSpeed: 15,
         baseAttackCooldown: 250, // in milliseconds
         imgs: {
             'player-default': {
@@ -32,6 +32,7 @@ export const entityMap = {
             speed: 7,
             baseHealth: 50,
             score: 25,
+            alarmDuration: 3000, // in ms
             imgProportions: [3, 2], // pigs needs to wider than tall
             imgSrc: './images/pig.png',
             imgName: 'mobs-pig'
@@ -41,6 +42,9 @@ export const entityMap = {
             speed: 7,
             baseHealth: 150,
             score: 75,
+            isHostile: true,
+            alarmDuration: 1000000, // hunt player until it dies
+            damage: 10,
             imgProportions: [3, 2], // cows needs to be wider than wall
             imgSrc: './images/cow.png',
             imgName: 'mobs-cow'

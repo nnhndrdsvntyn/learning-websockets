@@ -19,11 +19,9 @@ export function parsePacket(buffer) {
             const y = view.getUint16(offset); offset += 2;
             const angle = view.getInt16(offset); offset += 2;
 
-            let username = '';
             const usernameLength = view.getUint8(offset++);
-            for (let j = 0; j < usernameLength; j++) {
-                username += String.fromCharCode(view.getUint8(offset++));
-            }
+            const username = new TextDecoder().decode(new Uint8Array(view.buffer, offset, usernameLength));
+            offset += usernameLength;
 
             // set data
             const player = new Player(id, x, y);
@@ -72,11 +70,13 @@ export function parsePacket(buffer) {
             const maxHealth = view.getUint16(offset); offset += 2;
             const score = view.getUint32(offset); offset += 4;
 
-            let username = '';
             const usernameLength = view.getUint8(offset++);
-            for (let j = 0; j < usernameLength; j++) {
-                username += String.fromCharCode(view.getUint8(offset++));
-            }
+            const username = new TextDecoder().decode(new Uint8Array(view.buffer, offset, usernameLength));
+            offset += usernameLength;
+
+            const chatMessageLength = view.getUint8(offset++);
+            const chatMessage = new TextDecoder().decode(new Uint8Array(view.buffer, offset, chatMessageLength));
+            offset += chatMessageLength;
 
             // set data
             if (!ENTITIES.PLAYERS[id]) { // make player if it doesn't exist
@@ -90,7 +90,8 @@ export function parsePacket(buffer) {
             ENTITIES.PLAYERS[id].maxHealth = maxHealth;
             ENTITIES.PLAYERS[id].newAngle = angle;
             ENTITIES.PLAYERS[id].newScore = score;
-            ENTITIES.PLAYERS[id].username = username
+            ENTITIES.PLAYERS[id].username = username;
+            ENTITIES.PLAYERS[id].chatMessage = chatMessage;
         }
 
         // all players that aren't in this update will have their x and y set to undefined, because they are out of range.

@@ -36,9 +36,16 @@ wss.on('connection', (ws) => {
     ENTITIES.playerIds.add(ws.id);
 
     console.log('Client connected with id:', ws.id);
+    ENTITIES.newEntity({
+        entityType: 'player',
+        id: ws.id,
+        x: 5000,
+        y: 5000,
+        angle: 0,
+    });
 
     ws.on('message', (data) => {
-        parsePacket(data, ws.id);
+        parsePacket(data, ws);
     });
 
     ws.on('close', () => {
@@ -114,10 +121,14 @@ function update() {
             let bufferLength = 0;
             bufferLength += 1; // packet type
             bufferLength += 1; // player count
-            bufferLength += (playersToSend.length * 19) // id(4) + x(2) + y(2) angle(2) + health(2) + maxHealh(2) + score(4) + username length(1)
+            bufferLength += (playersToSend.length * 20) // id(4) + x(2) + y(2) angle(2) + health(2) + maxHealh(2) + score(4) + username length(1) + chat message length(1)
 
             for (const player of playersToSend) {
-                bufferLength += (player.username).length; // dynamic, based on player's username. so we need a for loop to check for this.
+                bufferLength += Buffer.byteLength(player.username); // dynamic, based on player's username. so we need a for loop to check for this.
+            }
+
+            for (const player of playersToSend) {
+                bufferLength += Buffer.byteLength(player.chatMessage); // dynamic, based on player's chat message. so we need a for loop to check for this.
             }
 
             bufferLength += 2; // mob count
@@ -135,6 +146,7 @@ function update() {
 
             for (const player of playersToSend) {
                 const username = player.username;
+                const chatMessage = player.chatMessage;
 
                 view.setUint32(offset, player.id); offset += 4;
                 view.setUint16(offset, player.x); offset += 2;
@@ -144,9 +156,16 @@ function update() {
                 view.setUint16(offset, player.maxHealth); offset += 2;
                 view.setUint32(offset, player.score); offset += 4;
 
-                view.setUint8(offset++, username.length); // username length
-                for (let i = 0; i < username.length; i++) {
-                    view.setUint8(offset++, username.charCodeAt(i));
+                const usernameBuf = Buffer.from(username);
+                view.setUint8(offset++, usernameBuf.length); // username length
+                for (const byte of usernameBuf) {
+                    view.setUint8(offset++, byte);
+                }
+
+                const chatMessageBuf = Buffer.from(chatMessage);
+                view.setUint8(offset++, chatMessageBuf.length); // chat message length
+                for (const byte of chatMessageBuf) {
+                    view.setUint8(offset++, byte);
                 }
             }
 

@@ -114,6 +114,7 @@ for (let i = 0; i < 100; i++) {
 }
 
 export function buildInitPacket(wsId) {
+    console.log("Building init packet for", wsId);
     /*
     sizes
     packet type: 1 byte

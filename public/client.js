@@ -50,7 +50,7 @@ for (const projectile of Object.values(entityMap.PROJECTILES)) {
     });
 }
 
-export const ws = new WebSocket(`wss://${location.host}`);
+export const ws = new WebSocket(`ws://${location.host}`);
 ws.binaryType = 'arraybuffer'
 window.ws = ws;
 
@@ -179,97 +179,11 @@ function render() {
     }, 1000 / TPS.clientCapped)
 }
 
-window.addEventListener("mousemove", e => {
-    if (isUIOpen) return;
-    let angle = Math.round(
-        Math.atan2(
-            e.clientY - innerHeight / 2,
-            e.clientX - innerWidth / 2
-        ) * 180 / Math.PI
-    );
-
-    const buffer = new ArrayBuffer(3);
-    const view = new DataView(buffer);
-
-    view.setUint8(0, 2); // 2 for angle packet
-    view.setInt16(1, angle);
-    ws.send(buffer);
-
-    // set local player's angle directly
-    ENTITIES.PLAYERS[myId].angle = angle;
-});
-
-window.addEventListener("mousedown", e => {
-    if (isUIOpen) return;
-
-    const buffer = new ArrayBuffer(2);
-    const view = new DataView(buffer);
-
-    if (e.button === 0) {
-        view.setUint8(0, 4); // 4 for set attack packet
-        view.setUint8(1, 1) // 1 for true
-    }
-
-    ws.send(buffer);
-});
-
-window.addEventListener("mouseup", e => {
-    if (isUIOpen) return;
-
-    const buffer = new ArrayBuffer(2);
-    const view = new DataView(buffer);
-
-    if (e.button === 0) {
-        view.setUint8(0, 4); // 4 for set attack packet
-        view.setUint8(1, 0) // 1 for false
-    }
-    ws.send(buffer);
-});
-
-const keys = new Set();
-document.addEventListener('keydown', (e) => {
-    if (isUIOpen) return;
-    if (!['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(e.key.toLowerCase())) return;
-    if (keys.has(e.key.toLowerCase())) return;
-    keys.add(e.key.toLowerCase());
-
-    let key;
-    const state = 1; // for true
-    if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 'arrowup') key = 1;
-    if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'arrowleft') key = 2;
-    if (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'arrowdown') key = 3;
-    if (e.key.toLowerCase() === 'd' || e.key.toLowerCase() === 'arrowright') key = 4;
-
-    const buffer = new ArrayBuffer(3);
-    const view = new DataView(buffer);
-
-    view.setUint8(0, 3); // input key packet type
-    view.setUint8(1, key); // key type
-    view.setUint8(2, state); // key state
-
-    ws.send(buffer);
-});
-
-document.addEventListener('keyup', (e) => {
-    if (!['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(e.key.toLowerCase())) return;
-    keys.delete(e.key.toLowerCase());
-
-    let key;
-    const state = 0; // for false
-    if (e.key.toLowerCase() === 'w' || e.key.toLowerCase() === 'arrowup') key = 1;
-    if (e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'arrowleft') key = 2;
-    if (e.key.toLowerCase() === 's' || e.key.toLowerCase() === 'arrowdown') key = 3;
-    if (e.key.toLowerCase() === 'd' || e.key.toLowerCase() === 'arrowright') key = 4;
-
-    const buffer = new ArrayBuffer(3);
-    const view = new DataView(buffer);
-
-    view.setUint8(0, 3); // input key packet type
-    view.setUint8(1, key); // key type
-    view.setUint8(2, state); // key state
-
-    ws.send(buffer);
-});
+// setings
+export const Settings = {
+    showIds: false
+}
+window.Settings = Settings;
 
 // update client FPS
 import { TPS } from './shared/entitymap.js';

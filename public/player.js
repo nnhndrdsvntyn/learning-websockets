@@ -5,6 +5,7 @@ import {
     myId, camera, LC
 } from './client.js';
 import { TPS, entityMap } from './shared/entitymap.js';
+import { Settings } from './client.js';
 
 export class Player {
     constructor(id, x, y) {
@@ -22,6 +23,7 @@ export class Player {
         this.maxHealth = undefined;
 
         this.username = "";
+        this.chatMessage = "";
 
         this.newAngle = 0;
         this.angle = 0;
@@ -99,12 +101,37 @@ export class Player {
             });
         }
 
+        // draw chat
+        if (this.chatMessage !== "") {
+            const chatText = this.chatMessage;
+            const chatMetrics = LC.measureText({ text: chatText, font: '17px Arial' });
+            const padding = 5;
+            LC.drawRect({ // chat bubble
+                pos: [screenPosX - chatMetrics.width / 2 - padding, screenPosY - this.radius - 30 - 20 - padding],
+                size: [chatMetrics.width + padding * 2, 20 + padding * 1.5],
+                color: 'rgba(64, 64, 64, 0.7)',
+                cornerRadius: 5
+            });
+
+
+            LC.drawText({
+                text: chatText,
+                pos: [screenPosX - chatMetrics.width / 2, screenPosY - this.radius - 35],
+                color: 'white',
+                font: '17px Arial'
+            });
+        }
+
         // draw username as text
         const usernameText = this.username;
-        const idText = ` (${this.id})`;
-
         const usernameMetrics = LC.measureText({ text: usernameText, font: 'bold 16px Arial' });
-        const idMetrics = LC.measureText({ text: idText, font: 'bold 16px Arial' });
+        let idText = "";
+        let idMetrics = { width: 0 };
+        
+        if (Settings.showIds) {
+            idText = ` (${this.id})`;
+            idMetrics = LC.measureText({ text: idText, font: 'bold 16px Arial' });
+        }
 
         const totalWidth = usernameMetrics.width + idMetrics.width;
 
@@ -114,11 +141,14 @@ export class Player {
             color: 'white',
             font: 'bold 16px Arial'
         });
-        LC.drawText({
-            text: idText,
-            pos: [screenPosX - totalWidth / 2 + usernameMetrics.width, screenPosY - this.radius - 5],
-            color: 'lightgray',
-            font: 'bold 16px Arial'
-        });
+        
+        if (Settings.showIds) {
+            LC.drawText({
+                text: idText,
+                pos: [screenPosX - totalWidth / 2 + usernameMetrics.width, screenPosY - this.radius - 5],
+                color: 'lightgray',
+                font: 'bold 16px Arial'
+            });
+        };
     }
 }
