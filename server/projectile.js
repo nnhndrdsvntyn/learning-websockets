@@ -10,20 +10,20 @@ export class Projectile {
 
         this.type = type;
         this.speed = entityMap.PROJECTILES[type].speed;
-        this.radius = entityMap.PROJECTILES[type].radius
+        this.radius = entityMap.PROJECTILES[type].radius;
+        this.distanceTraveled = 0;
+
+        let spawnTime = performance.now();
 
         this.shooter = shooter;
 
         ENTITIES.PROJECTILES[id] = this;
-
-        setTimeout(() => {
-            ENTITIES.deleteEntity('projectile', id);
-        }, 750);
     }
     move() {
-        const rad = this.angle * Math.PI / 180;
-        this.x += Math.cos(rad) * this.speed;
-        this.y += Math.sin(rad) * this.speed;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+
+        this.distanceTraveled += this.speed;
 
         this.resolveCollisions();
     }
@@ -89,5 +89,13 @@ export class Projectile {
                 return;
             }
         }
+    }
+    process() {
+        if (this.distanceTraveled > entityMap.PROJECTILES[this.type].maxDistance) {
+            ENTITIES.deleteEntity('projectile', this.id);
+        }
+        
+        this.move();
+        this.resolveCollisions();
     }
 }

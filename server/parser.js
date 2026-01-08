@@ -1,6 +1,12 @@
-import { ENTITIES } from './game.js';
-import { StringDecoder } from 'string_decoder';
-import { validateUsername } from './helpers.js';
+import {
+    ENTITIES
+} from './game.js';
+import {
+    StringDecoder
+} from 'string_decoder';
+import {
+    validateUsername
+} from './helpers.js';
 
 export function parsePacket(buffer, ws) {
     let offset = 0;
@@ -10,7 +16,8 @@ export function parsePacket(buffer, ws) {
         const usernameLength = buffer.readUint8(offset++);
         const potentialUsername = buffer.toString('utf8', offset, offset + usernameLength);
         if (!validateUsername(potentialUsername)) {
-            ws.close(); return;
+            ws.close();
+            return;
         }
 
         let username = '';
@@ -34,10 +41,18 @@ export function parsePacket(buffer, ws) {
         return;
     }
 
-    if (!ENTITIES.PLAYERS[ws.id]) return;
+    if (!ENTITIES.PLAYERS[ws.id]) return;   
 
-    if (packetType === 2) { // type 2 is angle packet
-        const angle = buffer.readInt16BE(offset); offset += 2;
+    if (packetType === 2) { // angle packet
+        if (ENTITIES.PLAYERS[ws.id].swingState != 0) return;
+        
+        const view = new DataView(
+            buffer.buffer,
+            buffer.byteOffset,
+            buffer.byteLength
+        );
+
+        const angle = view.getFloat32(1, false); // offset = 1, big-endian
         ENTITIES.PLAYERS[ws.id].angle = angle;
         return;
     }
@@ -56,7 +71,7 @@ export function parsePacket(buffer, ws) {
         ENTITIES.PLAYERS[ws.id].attacking = state; // 1 or 0
         return;
     }
-    if(packetType === 5) { // type 5 is chat message packet
+    if (packetType === 5) { // type 5 is chat message packet
         const messageLength = buffer.readUint8(offset++);
         const chatMessage = buffer.toString('utf8', offset, offset + messageLength);
         ENTITIES.PLAYERS[ws.id].chatMessage = chatMessage;

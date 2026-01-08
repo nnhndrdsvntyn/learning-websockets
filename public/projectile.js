@@ -41,10 +41,10 @@ export class Projectile {
 
 
         // lerp angle for mobs
-        this.angle += (((this.newAngle - this.angle + 540) % 360 - 180) * lerpFactor);
+        this.angle += (((this.newAngle - this.angle + Math.PI * 3) % (Math.PI * 2) - Math.PI) * lerpFactor);
 
         // keep angle within range
-        this.angle = ((this.angle + 180) % 360 + 360) % 360 - 180;
+        this.angle = ((this.angle + Math.PI) % (Math.PI * 2) + (Math.PI * 2)) % (Math.PI * 2) - Math.PI;
         
         let proportions = { ... entityMap.PROJECTILES[this.type].imgProportions };
 

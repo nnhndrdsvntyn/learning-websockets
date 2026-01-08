@@ -47,20 +47,11 @@ export class Mob {
 
 
         // lerp angle for mobs
-        this.angle += (((this.newAngle - this.angle + 540) % 360 - 180) * lerpFactor);
+        this.angle += (((this.newAngle - this.angle + Math.PI * 3) % (Math.PI * 2) - Math.PI) * lerpFactor);
 
         // keep angle within range
-        this.angle = ((this.angle + 180) % 360 + 360) % 360 - 180;
-
-        /*
-        LC.drawCircle({
-            pos: [screenPosX, screenPosY],
-            radius: this.radius,
-            color: 'red',
-            transparency: 0.5
-        });
-        */
-
+        this.angle = ((this.angle + Math.PI) % (Math.PI * 2) + (Math.PI * 2)) % (Math.PI * 2) - Math.PI;
+        
         let proportions = { ... entityMap.MOBS[this.type].imgProportions };
 
         LC.drawImage({
@@ -92,5 +83,15 @@ export class Mob {
                 cornerRadius: 2
             });
         }
+
+        // hitbox for debug
+        /*
+        LC.drawCircle({
+            pos: [screenPosX, screenPosY],
+            radius: this.radius,
+            color: 'red',
+            transparency: 0.5
+        });
+        */
     }
 }

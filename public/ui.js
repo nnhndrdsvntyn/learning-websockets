@@ -203,10 +203,10 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
 
     const updateRotation = (x, y) => {
         let angle = Math.round(Math.atan2(y - innerHeight / 2, x - innerWidth / 2) * 180 / Math.PI);
-        const buffer = new ArrayBuffer(3);
+        const buffer = new ArrayBuffer(6);
         const view = new DataView(buffer);
-        view.setUint8(0, 2);
-        view.setInt16(1, angle);
+        view.setUint8(0, 2); // 2 for angle packet
+        view.setFloat32(1, angle);
         ws.send(buffer);
         if (window.ENTITIES?.PLAYERS?.[window.myId]) {
             window.ENTITIES.PLAYERS[window.myId].angle = angle;
@@ -251,22 +251,18 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
 function setupDesktopControls() {
     window.addEventListener("mousemove", e => {
         if (isUIOpen) return;
-        let angle = Math.round(
-            Math.atan2(
-                e.clientY - innerHeight / 2,
-                e.clientX - innerWidth / 2
-            ) * 180 / Math.PI
-        );
+        let angle =
+            Math.atan2(e.clientY - innerHeight / 2, e.clientX - innerWidth / 2);
 
-        const buffer = new ArrayBuffer(3);
+        const buffer = new ArrayBuffer(6);
         const view = new DataView(buffer);
 
         view.setUint8(0, 2); // 2 for angle packet
-        view.setInt16(1, angle);
+        view.setFloat32(1, angle);
         ws.send(buffer);
 
         // set local player's angle directly
-        if (window.ENTITIES?.PLAYERS?.[window.myId]) {
+        if (window.ENTITIES?.PLAYERS?.[window.myId] && window.ENTITIES?.PLAYERS?.[window.myId].swingState === 0) {
             window.ENTITIES.PLAYERS[window.myId].angle = angle;
         }
     });

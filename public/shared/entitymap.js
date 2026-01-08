@@ -9,7 +9,7 @@ export const entityMap = {
     PLAYERS: {
         baseRadius: 30,
         baseMovementSpeed: 15,
-        baseAttackCooldown: 250, // in milliseconds
+        baseAttackCooldown: 750, // in milliseconds
         levels: {
             1: 0, // default
             2: 100, // warrior
@@ -29,6 +29,26 @@ export const entityMap = {
                 src: './images/player/player-hitman.png'
             }
         }
+    },
+    SWORDS: {
+        'imgs': {
+            '1': {
+                name: 'swords-sword1',
+                src: './images/swords/sword1.png',
+                swordLength: 125
+            },
+            '2': {
+                name: 'swords-sword2',
+                src: './images/swords/sword2.png',
+                swordLength: 150
+            },
+            '3': {
+                name: 'swords-sword3',
+                src: './images/swords/sword3.png',
+                swordLength: 175
+            }
+        }
+            
     },
     MOBS: {
         '1': {
@@ -52,12 +72,12 @@ export const entityMap = {
         },
         '3': {
             radius: 50,
-            speed: 7,
+            speed: 10,
             baseHealth: 150,
             score: 75,
             isHostile: true,
             alarmDuration: Number.MAX_SAFE_INTEGER, // hunt player until it dies, basically infinitely
-            damage: 10,
+            damage: 15,
             imgProportions: [3, 2], // cows needs to be wider than wall
             imgSrc: './images/cow.png',
             imgName: 'mobs-cow'
@@ -68,28 +88,31 @@ export const entityMap = {
             radius: 10,
             speed: 30,
             damage: 10,
+            maxDistance: 100,
             knockbackStrength: 100,
-            imgProportions: [2, 2], // pebble is equilateral.
-            imgSrc: './images/projectiles/pebble.png',
-            imgName: 'projectiles-pebble'
+            imgProportions: [1, 10],
+            imgSrc: './images/projectiles/airslash1.png',
+            imgName: 'projectiles-airslash1'
         },
         '2': {
             radius: 10,
             speed: 30,
             damage: 15,
+            maxDistance: 150,
             knockbackStrength: 100,
-            imgProportions: [4.5, 2], // dagger is wider than tall
-            imgSrc: './images/projectiles/dagger.png',
-            imgName: 'projectiles-dagger'
+            imgProportions: [1, 10],
+            imgSrc: './images/projectiles/airslash2.png',
+            imgName: 'projectiles-airslash2'
         },
         '3': {
             radius: 10,
             speed: 60,
             damage: 20,
+            maxDistance: 175,
             knockbackStrength: 50,
-            imgProportions: [3.5, 2], // bullet is wider than tall
-            imgSrc: './images/projectiles/bullet.png',
-            imgName: 'projectiles-bullet'
+            imgProportions: [1, 10],
+            imgSrc: './images/projectiles/airslash3.png',
+            imgName: 'projectiles-airslash3'
         }
     },
     STRUCTURES: {

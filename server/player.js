@@ -18,6 +18,10 @@ export class Player {
         this.lastDamagedTime = 0;
         this.lastDiedTime = 0;
 
+        this.lastHealedTime = 0;
+
+        this.swingState = 0;
+
         this.username;
         this.chatMessage = '';
 
@@ -32,18 +36,23 @@ export class Player {
         ENTITIES.PLAYERS[id] = this;
     }
     move() {
-        const oldX = this.x;
-        const oldY = this.y;
-        
         if (this.keys['w']) this.y -= this.speed;
         if (this.keys['a']) this.x -= this.speed;
         if (this.keys['s']) this.y += this.speed;
         if (this.keys['d']) this.x += this.speed;
     }
+    heal() {
+        const now = performance.now();
+        if (now - this.lastHealedTime > 1000) {
+            this.health = Math.min(this.health + 10, this.maxHealth);
+            this.lastHealedTime = now;
+        }
+    }
     attack() {
         if (Date.now() - this.lastAttackTime < this.attackCooldownTime || !this.attacking) return;
         this.lastAttackTime = Date.now();
-        
+        this.swingState = 0.1;
+
         const spawnProjectile = (angleOffset, shooter) => {
             let projectileId = Math.floor(Math.random() * 100000); // Use a larger range for IDs
             while(projectileId in ENTITIES.PROJECTILES) {
@@ -51,9 +60,8 @@ export class Player {
             }
 
             const projectileAngle = shooter.angle + angleOffset;
-            const rad = projectileAngle * Math.PI / 180;
-            const xOffset = Math.cos(rad) * shooter.radius; // spawn outside player
-            const yOffset = Math.sin(rad) * shooter.radius; // spawn outside player
+            const xOffset = Math.cos(projectileAngle) * shooter.radius; // spawn outside player
+            const yOffset = Math.sin(projectileAngle) * shooter.radius; // spawn outside player
 
             ENTITIES.newEntity({
                 entityType: 'projectile',
@@ -66,7 +74,11 @@ export class Player {
             });
         }
 
-        spawnProjectile(0, this);
+        let angleOffset = -Math.PI / 3; // Start from -60 degrees
+        while (angleOffset <= Math.PI / 3) { // Go up to 60 degrees
+            spawnProjectile(angleOffset, this);
+            angleOffset += Math.PI / 12; // Increment by 15 degrees (PI/12 radians)
+        }
     }
     resolveCollisions() {
         for (const player of Object.values(ENTITIES.PLAYERS)) {
@@ -131,8 +143,19 @@ export class Player {
     }
     process() {
         this.move();
+        this.heal();
         this.resolveCollisions();
         this.clamp();
         this.attack();
+
+        if (this.swingState > 0) {
+            this.swingState += 1;
+            this.speed = entityMap.PLAYERS.baseMovementSpeed * 0.1;
+            this.swingState = Math.floor(this.swingState);
+        }
+        if (this.swingState === 7) {
+            this.swingState = 0;
+            this.speed = entityMap.PLAYERS.baseMovementSpeed;
+        }
     }
 }

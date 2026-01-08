@@ -17,7 +17,7 @@ export function parsePacket(buffer) {
             const id = view.getUint32(offset); offset += 4;
             const x = view.getUint16(offset); offset += 2;
             const y = view.getUint16(offset); offset += 2;
-            const angle = view.getInt16(offset); offset += 2;
+            const angle = view.getFloat32(offset); offset += 4;
 
             const usernameLength = view.getUint8(offset++);
             const username = new TextDecoder().decode(new Uint8Array(view.buffer, offset, usernameLength));
@@ -36,7 +36,7 @@ export function parsePacket(buffer) {
             const id = view.getUint32(offset); offset += 4;
             const x = view.getUint16(offset); offset += 2;
             const y = view.getUint16(offset); offset += 2;
-            const angle = view.getInt16(offset); offset += 2;
+            const angle = view.getFloat32(offset); offset += 4;
             const type = view.getUint8(offset++);
 
             // set data
@@ -65,11 +65,12 @@ export function parsePacket(buffer) {
 
             const x = view.getUint16(offset); offset += 2;
             const y = view.getUint16(offset); offset += 2;
-            const angle = view.getInt16(offset); offset += 2;
+            const angle = view.getFloat32(offset); offset += 4;
             const health = view.getUint16(offset); offset += 2;
             const maxHealth = view.getUint16(offset); offset += 2;
             const score = view.getUint32(offset); offset += 4;
             const level = view.getUint8(offset++);
+            const swingState = view.getUint8(offset++);
 
             const usernameLength = view.getUint8(offset++);
             const username = new TextDecoder().decode(new Uint8Array(view.buffer, offset, usernameLength));
@@ -93,6 +94,7 @@ export function parsePacket(buffer) {
             ENTITIES.PLAYERS[id].newScore = score;
             ENTITIES.PLAYERS[id].level = level;
             ENTITIES.PLAYERS[id].username = username;
+            ENTITIES.PLAYERS[id].newSwingState = swingState;
             ENTITIES.PLAYERS[id].chatMessage = chatMessage;
         }
 
@@ -115,7 +117,7 @@ export function parsePacket(buffer) {
 
             const x = view.getUint16(offset); offset += 2;
             const y = view.getUint16(offset); offset += 2;
-            const angle = view.getInt16(offset); offset += 2;
+            const angle = view.getFloat32(offset); offset += 4;
             const health = view.getUint16(offset); offset += 2;
             const maxHealth = view.getUint16(offset); offset += 2;
             const type = view.getUint8(offset++);
@@ -150,7 +152,7 @@ export function parsePacket(buffer) {
 
             const x = view.getUint16(offset); offset += 2;
             const y = view.getUint16(offset); offset += 2;
-            const angle = view.getInt16(offset); offset += 2;
+            const angle = view.getFloat32(offset); offset += 4;
             const type = view.getUint8(offset++);
 
             if (!ENTITIES.PROJECTILES[id]) {
@@ -168,7 +170,7 @@ export function parsePacket(buffer) {
         const entityId = view.getUint32(offset); offset += 4; // entity id to add
         const x = view.getUint16(offset); offset += 2; // x
         const y = view.getUint16(offset); offset += 2; // y
-        const angle = view.getInt16(offset); offset += 2; // angle
+        const angle = view.getFloat32(offset); offset += 4; // angle
         if (entityType === 1) {
             new Player(entityId, x, y);
         } else if (entityType === 2) {

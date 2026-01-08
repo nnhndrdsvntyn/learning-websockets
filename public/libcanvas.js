@@ -10,7 +10,7 @@ export class LibCanvas {
         this.canvas.addEventListener('mousemove', (e) => {
             let centerX = window.innerWidth / 2;
             let centerY = window.innerHeight / 2;
-            
+
             this._mouseX = e.clientX;
             this._mouseY = e.clientY;
         });
@@ -44,6 +44,51 @@ export class LibCanvas {
 
     clearCanvas() {
         this.ctx.clearRect(0, 0, this.width, this.height);
+    }
+
+    drawLine({
+        start = [0, 0],
+        length = 100,
+        angle = 0, // in radians
+        color = 'black',
+        lineWidth = 1,
+        transparency = 1
+    } = {}) {
+        if (!Array.isArray(start) || start.length !== 2) {
+            throw new Error('start must be a 2 element array for drawLine');
+        }
+        if (typeof length !== 'number' || length <= 0) {
+            throw new Error('length must be a positive number for drawLine');
+        }
+        if (typeof angle !== 'number') {
+            throw new Error('angle must be a number for drawLine');
+        }
+        if (typeof color !== 'string') {
+            throw new Error('color must be a string for drawLine');
+        }
+        if (typeof lineWidth !== 'number' || lineWidth <= 0) {
+            throw new Error('lineWidth must be a positive number for drawLine');
+        }
+        if (typeof transparency !== 'number' || transparency < 0 || transparency > 1) {
+            throw new Error('transparency must be a number between 0 and 1 for drawLine');
+        }
+
+        const [startX, startY] = start;
+
+        // Calculate end point using trigonometry
+        const endX = startX + Math.cos(angle) * length;
+        const endY = startY + Math.sin(angle) * length;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = lineWidth;
+        this.ctx.globalAlpha = transparency;
+        this.ctx.beginPath();
+        this.ctx.moveTo(startX, startY);
+        this.ctx.lineTo(endX, endY);
+        this.ctx.stroke();
+        this.ctx.globalAlpha = 1;
+        this.ctx.restore();
     }
 
     drawRect({
@@ -224,8 +269,8 @@ export class LibCanvas {
         if (!Array.isArray(size) || size.length !== 2) {
             throw new Error('size must be a 2 element array for drawImage');
         }
-        if (typeof rotation !== 'number' || rotation < -180 || rotation > 180) {
-            throw new Error('rotation must be a number between -180 and 180 for drawImage');
+        if (typeof rotation !== 'number') {
+            throw new Error('rotation must be a number for drawImage');
         }
         if (!this.images[name]) {
             // throw new Error(`image ${name} needs to be loaded before it can be drawn.`);
@@ -240,7 +285,7 @@ export class LibCanvas {
         const halfHeight = height / 2;
         this.ctx.save();
         this.ctx.translate(x + halfWidth, y + halfHeight);
-        this.ctx.rotate(rotation * (Math.PI / 180));
+        this.ctx.rotate(rotation);
         this.ctx.globalAlpha = transparency;
         this.ctx.drawImage(this.images[name], -halfWidth, -halfHeight, width, height);
         this.ctx.globalAlpha = 1;
@@ -274,8 +319,8 @@ export class LibCanvas {
         // Canvas center
         const centerX = window.innerWidth / 2;
         const centerY = window.innerHeight / 2;
-    
+
         // Calculate angle
-        return Math.atan2(this._mouseY - centerY, this._mouseX - centerX) * (180 / Math.PI);
+        return Math.atan2(this._mouseY - centerY, this._mouseX - centerX);
     }
 }

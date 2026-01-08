@@ -66,10 +66,10 @@ function update() {
         const mob = ENTITIES.MOBS[id];
         mob.process();
     }
-    // move projectiles
+    // process projectiles
     for (const id in ENTITIES.PROJECTILES) {
         const projectile = ENTITIES.PROJECTILES[id];
-        projectile.move();
+        projectile.process();
     }
     // handle structure collisions
     for (const id in ENTITIES.STRUCTURES) {
@@ -120,7 +120,7 @@ function update() {
             let bufferLength = 0;
             bufferLength += 1; // packet type
             bufferLength += 1; // player count
-            bufferLength += (playersToSend.length * 21) // id(4) + x(2) + y(2) angle(2) + health(2) + maxHealh(2) + score(4) + level(1) + username length(1) + chat message length(1)
+            bufferLength += (playersToSend.length * 24) // id(4) + x(2) + y(2) angle(4) + swingState(1) + health(2) + maxHealh(2) + score(4) + level(1) + username length(1) + chat message length(1)
 
             for (const player of playersToSend) {
                 bufferLength += Buffer.byteLength(player.username); // dynamic, based on player's username. so we need a for loop to check for this.
@@ -131,10 +131,10 @@ function update() {
             }
 
             bufferLength += 2; // mob count
-            bufferLength += mobsToSend.length * 15; // id(4) + x(2) + y(2) + angle(2) + health(2) + maxHealth(2) + type(1)
+            bufferLength += mobsToSend.length * 17; // id(4) + x(2) + y(2) + angle(4) + health(2) + maxHealth(2) + type(1)
             
             bufferLength += 2; // projectile count
-            bufferLength += projectilesToSend.length * 11; // id(4) + x(2) + y(2) + angle(2) + type(1)
+            bufferLength += projectilesToSend.length * 13; // id(4) + x(2) + y(2) + angle(4) + type(1)
 
             const buffer = new ArrayBuffer(bufferLength);
             const view = new DataView(buffer);
@@ -150,11 +150,12 @@ function update() {
                 view.setUint32(offset, player.id); offset += 4;
                 view.setUint16(offset, player.x); offset += 2;
                 view.setUint16(offset, player.y); offset += 2;
-                view.setInt16(offset, player.angle); offset += 2;
+                view.setFloat32(offset, player.angle); offset += 4;
                 view.setUint16(offset, player.health); offset += 2;
                 view.setUint16(offset, player.maxHealth); offset += 2;
                 view.setUint32(offset, player.score); offset += 4;
                 view.setUint8(offset++, player.level);
+                view.setUint8(offset++, player.swingState);
 
                 const usernameBuf = Buffer.from(username);
                 view.setUint8(offset++, usernameBuf.length); // username length
@@ -174,7 +175,7 @@ function update() {
                 view.setUint32(offset, mob.id); offset += 4;
                 view.setUint16(offset, mob.x); offset += 2;
                 view.setUint16(offset, mob.y); offset += 2;
-                view.setInt16(offset, mob.angle); offset += 2;
+                view.setFloat32(offset, mob.angle); offset += 4;
                 view.setUint16(offset, mob.health); offset += 2;
                 view.setUint16(offset, mob.maxHealth); offset += 2;
                 view.setUint8(offset++, mob.type);
@@ -185,7 +186,7 @@ function update() {
                 view.setUint32(offset, projectile.id); offset += 4;
                 view.setUint16(offset, projectile.x); offset += 2;
                 view.setUint16(offset, projectile.y); offset += 2;
-                view.setInt16(offset, projectile.angle); offset += 2;
+                view.setFloat32(offset, projectile.angle); offset += 4;
                 view.setUint8(offset++, projectile.type);
             }
 

@@ -31,6 +31,12 @@ for (const image of Object.values(entityMap.PLAYERS.imgs)) {
         src: image.src
     }); 
 }
+for (const image of Object.values(entityMap.SWORDS.imgs)) {
+    LC.loadImage({
+        name: image.name,
+        src: image.src
+    });
+}
 for (const mob of Object.values(entityMap.MOBS)) {
     LC.loadImage({
         name: mob.imgName,
@@ -50,7 +56,7 @@ for (const projectile of Object.values(entityMap.PROJECTILES)) {
     });
 }
 
-export const ws = new WebSocket(`wss://${location.host}`);
+export const ws = new WebSocket(`ws://${location.host}`);
 ws.binaryType = 'arraybuffer'
 window.ws = ws;
 

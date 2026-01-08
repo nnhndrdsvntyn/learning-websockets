@@ -14,7 +14,7 @@ export class Mob {
         this.health = entityMap.MOBS[type].baseHealth;
         this.maxHealth = entityMap.MOBS[type].baseHealth;
 
-        this.angle = Math.floor(Math.random() * 361) - 180;
+        this.angle = Math.random() * Math.PI * 2 - Math.PI;
         this.radius = entityMap.MOBS[type].radius;
         this.speed = entityMap.MOBS[type].speed;
 
@@ -30,10 +30,9 @@ export class Mob {
         ENTITIES.MOBS[id] = this;
     }
     move() {
-        const rad = this.angle * Math.PI / 180;
         // move
-        this.x += Math.cos(rad) * this.speed;
-        this.y += Math.sin(rad) * this.speed;
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
     }
     resolveCollisions() {
         // check collisions with players
@@ -63,10 +62,10 @@ export class Mob {
     turn() {
         if (this.isAlarmed) {
             if (this.target && entityMap.MOBS[this.type].isHostile) { // turn towards target if hostile
-                this.angle = Math.atan2(this.target.y - this.y, this.target.x - this.x) * 180 / Math.PI;
+                this.angle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
                 return; // don't run code after this
             } else if (this.target && !entityMap.MOBS[this.type].isHostile) { // turn away from target if not hostile
-                this.angle = Math.atan2(this.y - this.target.y, this.x - this.target.x) * 180 / Math.PI;
+                this.angle = Math.atan2(this.y - this.target.y, this.x - this.target.x);
                 return; // don't run code after this
             } else {
                 // no target, stop being alarmed and reset speed
@@ -76,7 +75,7 @@ export class Mob {
             }
         } else {
             if (performance.now() - this.lastTurnTime > this.nextTurnDelay) {
-                this.angle = Math.floor(Math.random() * 361) - 180; // rand angle between -180 and 180 (inclusive)
+                this.angle = Math.random() * Math.PI * 2 - Math.PI; // rand angle between -PI and PI
                 this.lastTurnTime = performance.now();
 
                 this.nextTurnDelay = Math.floor(Math.random() * 3001) + 3000;

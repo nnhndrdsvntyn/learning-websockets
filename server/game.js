@@ -45,7 +45,7 @@ export const ENTITIES = {
                 return;
             }
             let bufferLength = 10;
-            if (entityType === 2 || entityType === 3) bufferLength += 3; // add 1 spot 'type' and 2 spots for 'angle' if its a projectile / mob
+            if (entityType === 2 || entityType === 3) bufferLength += 5; // add 1 spot 'type' and 4 spots for 'angle' if its a projectile / mob
             const buffer = new ArrayBuffer(bufferLength);
             const view = new DataView(buffer);
             let offset = 0;
@@ -57,7 +57,7 @@ export const ENTITIES = {
             offset += 2;
             view.setUint16(offset, y); // y
             offset += 2;
-            if (entityType === 2 || entityType === 3) view.setUint16(offset, angle); offset += 2; // angle allocate mem for mob / projectile angle
+            if (entityType === 2 || entityType === 3) view.setFloat32(offset, angle); offset += 4; // angle allocate mem for mob / projectile angle
             if (entityType === 2 || entityType === 3) view.setUint8(offset++, type); // allocate mem for mob type / projectile type IF it is that type of entity
             client.send(buffer);
         });
@@ -124,10 +124,10 @@ export function buildInitPacket(wsId) {
     */
     let bufferLength = 1 + 1; // packet type + player count
     for (const player of Object.values(ENTITIES.PLAYERS)) {
-        bufferLength += 4 + 2 + 2 + 2 + 1 + player.username.length; // id(4), x(2), y(2), angle(2), username length
+        bufferLength += 4 + 2 + 2 + 4 + 1 + player.username.length; // id(4), x(2), y(2), angle(4), username length
     }
     bufferLength += 2; // mob count
-    bufferLength += Object.keys(ENTITIES.MOBS).length * 11; // id(4) + x(2) + y(2) + angle(2) + type(1)
+    bufferLength += Object.keys(ENTITIES.MOBS).length * 13; // id(4) + x(2) + y(2) + angle(4) + type(1)
 
     bufferLength += 2; // structure count
     bufferLength += Object.keys(ENTITIES.STRUCTURES).length * 9; // id(4) + x(2) + y(2) + type(1)
@@ -147,8 +147,8 @@ export function buildInitPacket(wsId) {
         offset += 2;
         view.setUint16(offset, player.y); // y
         offset += 2;
-        view.setInt16(offset, player.angle); // angle
-        offset += 2;
+        view.setFloat32(offset, player.angle); // angle
+        offset += 4;
 
         // Write username
         view.setUint8(offset++, player.username.length); // username length
@@ -163,7 +163,7 @@ export function buildInitPacket(wsId) {
         view.setUint32(offset, mob.id); offset += 4; // id
         view.setUint16(offset, mob.x); offset += 2; // x
         view.setUint16(offset, mob.y); offset += 2; // y
-        view.setInt16(offset, mob.angle); offset += 2; // angle
+        view.setFloat32(offset, mob.angle); offset += 4; // angle
         view.setUint8(offset++, mob.type); // type
     }
 
