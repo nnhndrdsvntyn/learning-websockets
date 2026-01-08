@@ -32,8 +32,13 @@ export function initializeUI() {
     }, container, {
         innerHTML: `
         <div style="color:white; font-weight:bold; margin-bottom:10px; font-family:sans-serif;">Set Username</div>
-        <input id="u" maxlength="15" placeholder="Username">
-        <button id="s">Set</button>
+        <div style="padding:10px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:10px; display:inline-block;">
+            <input id="u" maxlength="15" placeholder="Username" style="width:200px;">
+            <button id="s" style="margin-left:8px">Set</button>
+        </div>
+        <div>
+            <button id="fullscreenToggle" style="margin-top:4px">Enter Fullscreen</button>
+        </div>
     `});
 
     // Chat Input
@@ -63,6 +68,33 @@ export function initializeUI() {
             settingsModal.style.display = 'none';
         }
     };
+
+    // Fullscreen toggle logic for settings
+    const fsBtn = settingsModal.querySelector('#fullscreenToggle');
+    if (fsBtn) {
+        const updateFSBtnText = () => {
+            const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            fsBtn.textContent = isFS ? 'Exit Fullscreen' : 'Enter Fullscreen';
+        };
+
+        fsBtn.onclick = async () => {
+            try {
+                if (!document.fullscreenElement) {
+                    await document.documentElement.requestFullscreen?.();
+                } else {
+                    await document.exitFullscreen?.();
+                }
+            } catch (err) {
+                // ignore errors silently
+            }
+            // update text after state change
+            setTimeout(updateFSBtnText, 100);
+        };
+
+        // Keep button text in sync when full screen changes outside modal
+        document.addEventListener('fullscreenchange', updateFSBtnText);
+        updateFSBtnText();
+    }
 
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -202,7 +234,7 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
     };
 
     const updateRotation = (x, y) => {
-        let angle = Math.round(Math.atan2(y - innerHeight / 2, x - innerWidth / 2) * 180 / Math.PI);
+        let angle = Math.atan2(y - innerHeight / 2, x - innerWidth / 2);
         const buffer = new ArrayBuffer(6);
         const view = new DataView(buffer);
         view.setUint8(0, 2); // 2 for angle packet

@@ -24,6 +24,7 @@ export class Player {
 
         this.username;
         this.chatMessage = '';
+        this.lastChatTime = 0;
 
         this.x = x;
         this.y = y;
@@ -157,5 +158,11 @@ export class Player {
             this.swingState = 0;
             this.speed = entityMap.PLAYERS.baseMovementSpeed;
         }
+
+        const now = performance.now();
+        if (this.chatMessage && now - this.lastChatTime > 10000) {
+            this.chatMessage = '';
+            this.lastChatTime = now;
+        };
     }
 }
