@@ -56,7 +56,7 @@ for (const projectile of Object.values(entityMap.PROJECTILES)) {
     });
 }
 
-export const ws = new WebSocket(`wss://${location.host}`);
+export const ws = new WebSocket(`ws://${location.host}`);
 ws.binaryType = 'arraybuffer'
 window.ws = ws;
 
@@ -153,6 +153,20 @@ function render() {
     }
     for (const player of Object.values(ENTITIES.PLAYERS)) {
         player.draw();
+    }
+
+    // draw bushes on top of players
+    for (const structure of Object.values(ENTITIES.STRUCTURES)) {
+        if (structure.type === 3) {
+            const screenPosX = structure.x - camera.x;
+            const screenPosY = structure.y - camera.y;
+            LC.drawImage({
+                name: 'structures-bush1',
+                pos: [screenPosX - structure.radius, screenPosY - structure.radius],
+                size: [structure.radius * 2, structure.radius * 2],
+                transparency: 0.8
+            });
+        }
     }
 
     const localPlayer = ENTITIES.PLAYERS[myId];

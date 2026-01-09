@@ -14,6 +14,9 @@ export class Structure {
         ENTITIES.STRUCTURES[id] = this;
     }
     draw() {
+        // don't draw bushes now, they are drawn in client.js separately for layering purposes
+        if (this.type === 3) return;
+        
         const screenPosX = this.x - camera.x;
         const screenPosY = this.y - camera.y;
 

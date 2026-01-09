@@ -45,7 +45,7 @@ export class Player {
     heal() {
         const now = performance.now();
         if (now - this.lastHealedTime > 1000) {
-            this.health = Math.min(this.health + 10, this.maxHealth);
+            this.health = Math.min(this.health + 5, this.maxHealth);
             this.lastHealedTime = now;
         }
     }
@@ -139,6 +139,7 @@ export class Player {
         this.x = 5000;
         this.y = 5000;
         this.score = 0; // reset score
+        this.level = 1; // reset level
         this.attacking = false;
         this.keys = {w: 0, a: 0, s: 0, d: 0};
     }
@@ -149,6 +150,10 @@ export class Player {
         this.clamp();
         this.attack();
 
+        if (this.chatMessage && performance.now() - this.lastChatTime > 10000) {
+            this.chatMessage = '';
+        }
+
         if (this.swingState > 0) {
             this.swingState += 1;
             this.speed = entityMap.PLAYERS.baseMovementSpeed * 0.1;
@@ -158,11 +163,5 @@ export class Player {
             this.swingState = 0;
             this.speed = entityMap.PLAYERS.baseMovementSpeed;
         }
-
-        const now = performance.now();
-        if (this.chatMessage && now - this.lastChatTime > 10000) {
-            this.chatMessage = '';
-            this.lastChatTime = now;
-        };
     }
 }

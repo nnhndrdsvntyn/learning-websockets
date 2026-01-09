@@ -125,6 +125,12 @@ export const entityMap = {
             radius: 150,
             imgSrc: './images/rock1.png',
             imgName: 'structures-rock1'
+        },
+        '3': {
+            radius: 120,
+            noCollisions: true,
+            imgSrc: './images/bush1.png',
+            imgName: 'structures-bush1'
         }
     }
 };

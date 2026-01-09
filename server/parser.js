@@ -75,6 +75,7 @@ export function parsePacket(buffer, ws) {
         const messageLength = buffer.readUint8(offset++);
         const chatMessage = buffer.toString('utf8', offset, offset + messageLength);
         ENTITIES.PLAYERS[ws.id].chatMessage = chatMessage;
+        ENTITIES.PLAYERS[ws.id].lastChatTime = performance.now();
         return;
     }
 }

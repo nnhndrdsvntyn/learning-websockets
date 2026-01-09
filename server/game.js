@@ -113,6 +113,25 @@ for (let i = 0; i < 100; i++) {
     new Structure(i + 2, x, y, 2);
 }
 
+// bush structures (make sure to not spawn within spawnzoneradius + 100 distance from a spawn zone AND rock)
+for (let i = 0; i < 100; i++) {
+    let x, y;
+    let validPosition = false;
+    while (!validPosition) {
+        x = Math.floor(Math.random() * 10000);
+        y = Math.floor(Math.random() * 10000);
+        const spawnZone = ENTITIES.STRUCTURES[1]; // Assuming spawn zone is structure with id 1
+        const distance = Math.sqrt(Math.pow(x - spawnZone.x, 2) + Math.pow(y - spawnZone.y, 2));
+        // Ensure not near spawn zone and not near map edges (10000x10000 map)
+        if (distance > spawnZone.radius + 100 &&
+            x > 500 && x < 9500 &&
+            y > 500 && y < 9500) {
+            validPosition = true;
+        }
+    }
+    new Structure(i + 3, x, y, 3);
+}
+
 export function buildInitPacket(wsId) {
     console.log("Building init packet for", wsId);
     /*

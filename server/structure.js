@@ -13,6 +13,8 @@ export class Structure {
         ENTITIES.STRUCTURES[id] = this;
     }
     handleCollisions() {
+        if (entityMap.STRUCTURES[this.type].noCollisions) return;
+        
         // check collisions with players
         for (const player of Object.values(ENTITIES.PLAYERS)) {
             if (this.type === 1) return; // spawn zones don't handle collisions with players.

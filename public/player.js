@@ -72,6 +72,39 @@ export class Player {
         const screenPosX = this.x - camera.x;
         const screenPosY = this.y - camera.y;
 
+        // lerp swing state
+        const delta = this.newSwingState - this.swingState;
+
+        // snap if delta is tiny
+        if (Math.abs(delta) < 0.01) {
+            this.swingState = this.newSwingState;
+        } else if (this.newSwingState < this.swingState) {
+            // if the new swing state is lower than the current, then automcailly just set it, dont lerp.
+            this.swingState = this.newSwingState;
+        } else {
+            this.swingState += delta * lerpFactor;
+        }
+
+        this.swordAngleOffset = (this.swingState * (Math.PI / 6)) - (Math.PI / 2);
+        const angleRad = this.angle + this.swordAngleOffset;
+
+        const swordLength = entityMap.SWORDS.imgs[this.level].swordLength;
+        const swordHeight = swordLength / 3;
+
+        // move origin to the handle instead of center
+        const offsetX = Math.cos(angleRad) * (this.radius + swordLength / 2);
+        const offsetY = Math.sin(angleRad) * (this.radius + swordLength / 2);
+
+        LC.drawImage({
+            name: `swords-sword${this.level}`,
+            pos: [
+                screenPosX + offsetX - swordLength / 2,
+                screenPosY + offsetY - swordHeight / 2
+            ],
+            size: [swordLength, swordHeight],
+            rotation: angleRad
+        });
+
 
         // lerp angle for other players
         if (this.id != myId) {
@@ -181,38 +214,5 @@ export class Player {
             transparency: 0.5
         });
         */
-
-        // lerp swing state
-        const delta = this.newSwingState - this.swingState;
-
-        // snap if delta is tiny
-        if (Math.abs(delta) < 0.01) {
-            this.swingState = this.newSwingState;
-        } else if (this.newSwingState < this.swingState) {
-            // if the new swing state is lower than the current, then automcailly just set it, dont lerp.
-            this.swingState = this.newSwingState;
-        } else {
-            this.swingState += delta * lerpFactor;
-        }
-
-        this.swordAngleOffset = (this.swingState * (Math.PI / 6)) - (Math.PI / 2);
-        const angleRad = this.angle + this.swordAngleOffset;
-
-        const swordLength = entityMap.SWORDS.imgs[this.level].swordLength;
-        const swordHeight = swordLength / 3;
-
-        // move origin to the handle instead of center
-        const offsetX = Math.cos(angleRad) * (this.radius + swordLength / 2);
-        const offsetY = Math.sin(angleRad) * (this.radius + swordLength / 2);
-
-        LC.drawImage({
-            name: `swords-sword${this.level}`,
-            pos: [
-                screenPosX + offsetX - swordLength / 2,
-                screenPosY + offsetY - swordHeight / 2
-            ],
-            size: [swordLength, swordHeight],
-            rotation: angleRad
-        });
     }
 }
