@@ -5,8 +5,9 @@ import {
     StringDecoder
 } from 'string_decoder';
 import {
-    validateUsername
+    validateUsername, cmdRun
 } from './helpers.js';
+import { wss } from '../server.js';
 
 export function parsePacket(buffer, ws) {
     let offset = 0;
@@ -77,5 +78,37 @@ export function parsePacket(buffer, ws) {
         ENTITIES.PLAYERS[ws.id].chatMessage = chatMessage;
         ENTITIES.PLAYERS[ws.id].lastChatTime = performance.now();
         return;
+    }
+    if (packetType === 6) { // type 6 is command packet
+        const adminPassword = 'admin123'; // Example admin password
+        const cmdType = buffer.readUint8(offset++);
+        if (cmdType === 1) { // tp pos to entity packet
+            const entityType = buffer.readUint8(offset++);
+            const entityId = buffer.readUInt32BE(offset); offset += 4;
+            const x = buffer.readUint16BE(offset);
+            offset += 2;
+            const y = buffer.readUint16BE(offset);
+            offset += 2;
+            cmdRun.tppos(entityType, entityId, x, y);
+        } else if (cmdType === 2) { // tp entity to entity packet
+            const entityType = buffer.readUint8(offset++);
+            const entityId = buffer.readUInt32BE(offset); offset += 4;
+            const targetEntityType = buffer.readUint8(offset++);
+            const targetEntityId = buffer.readUInt32BE(offset); offset += 4;
+            cmdRun.tpent(entityType, entityId, targetEntityType, targetEntityId);
+        } else if (cmdType === 3) { // kick player packet
+            const entityId = buffer.readUInt32BE(offset); offset += 4;
+            wss.clients.forEach(client => {
+                if (client.id === entityId) {
+                    client.close();
+                    delete ENTITIES.PLAYERS[entityId];
+                }
+            }); 
+        } else if (cmdType === 4) { // set xp of an entity
+            const entityType = buffer.readUint8(offset++);
+            const entityId = buffer.readUInt32BE(offset); offset += 4;
+            const scoreAmount = buffer.readUint32BE(offset); offset += 4;
+            cmdRun.setscore(entityType, entityId, scoreAmount);
+        }
     }
 }

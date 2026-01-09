@@ -9,6 +9,7 @@ import { Projectile } from './projectile.js';
 import {
     wss
 } from '../server.js';
+import { buildPacket } from './helpers.js';
 
 export const ENTITIES = {
     PLAYERS: {},
@@ -44,22 +45,12 @@ export const ENTITIES = {
                 client.send(buildInitPacket(client.id));
                 return;
             }
-            let bufferLength = 10;
-            if (entityType === 2 || entityType === 3) bufferLength += 5; // add 1 spot 'type' and 4 spots for 'angle' if its a projectile / mob
-            const buffer = new ArrayBuffer(bufferLength);
-            const view = new DataView(buffer);
-            let offset = 0;
-
-            view.setUint8(offset++, 3); // add packet
-            view.setUint8(offset++, entityType); // entity type
-            view.setUint32(offset, id); offset += 4; // entity id
-            view.setUint16(offset, x); // x
-            offset += 2;
-            view.setUint16(offset, y); // y
-            offset += 2;
-            if (entityType === 2 || entityType === 3) view.setFloat32(offset, angle); offset += 4; // angle allocate mem for mob / projectile angle
-            if (entityType === 2 || entityType === 3) view.setUint8(offset++, type); // allocate mem for mob type / projectile type IF it is that type of entity
-            client.send(buffer);
+            
+            if (entityType === 2 || entityType === 3) {
+                client.send(buildPacket('u8', 3, 'u8', entityType, 'u32', id, 'u16', x, 'u16', y, 'f32', angle, 'u8', type));
+            } else {
+                client.send(buildPacket('u8', 3, 'u8', entityType, 'u32', id, 'u16', x, 'u16', y));
+            }
         });
     },
     deleteEntity: (type, id) => {
@@ -79,14 +70,7 @@ export const ENTITIES = {
             delete ENTITIES.MOBS[id];
         }
         wss.clients.forEach(client => {
-            const buffer = new ArrayBuffer(1 + 1 + 4);
-            const view = new DataView(buffer);
-            let offset = 0;
-            view.setUint8(offset++, 4); // delete packet
-            view.setUint8(offset++, type); // entity type
-            view.setUint32(offset, id); offset += 4; // entity id
-
-            client.send(buffer); // tell this client (loop tells all connected clients)
+            client.send(buildPacket('u8', 4, 'u8', type, 'u32', id));
         });
     }
 }
@@ -134,66 +118,25 @@ for (let i = 0; i < 100; i++) {
 
 export function buildInitPacket(wsId) {
     console.log("Building init packet for", wsId);
-    /*
-    sizes
-    packet type: 1 byte
-
-    player count: 1 byte
-    players: player count * (1 byte for id + 2 bytes for x + 2 bytes for y + 2 bytes for angle + 1 byte for username length + username bytes)
-    */
-    let bufferLength = 1 + 1; // packet type + player count
-    for (const player of Object.values(ENTITIES.PLAYERS)) {
-        bufferLength += 4 + 2 + 2 + 4 + 1 + player.username.length; // id(4), x(2), y(2), angle(4), username length
-    }
-    bufferLength += 2; // mob count
-    bufferLength += Object.keys(ENTITIES.MOBS).length * 13; // id(4) + x(2) + y(2) + angle(4) + type(1)
-
-    bufferLength += 2; // structure count
-    bufferLength += Object.keys(ENTITIES.STRUCTURES).length * 9; // id(4) + x(2) + y(2) + type(1)
-
-    const buffer = new ArrayBuffer(bufferLength);
-    const view = new DataView(buffer);
-    let offset = 0;
-
-    view.setUint8(offset++, 1) // 1 for init packet
-
-    // write players to packet
-    view.setUint8(offset++, Object.keys(ENTITIES.PLAYERS).length) // number of players
-    for (const player of Object.values(ENTITIES.PLAYERS)) {
-        view.setUint32(offset, player.id); // id
-        offset += 4;
-        view.setUint16(offset, player.x); // x
-        offset += 2;
-        view.setUint16(offset, player.y); // y
-        offset += 2;
-        view.setFloat32(offset, player.angle); // angle
-        offset += 4;
-
-        // Write username
-        view.setUint8(offset++, player.username.length); // username length
-        for (let i = 0; i < player.username.length; i++) {
-            view.setUint8(offset++, player.username.charCodeAt(i));
-        }
+    const args = ['u8', 1];
+    
+    const players = Object.values(ENTITIES.PLAYERS);
+    args.push('u8', players.length);
+    for (const player of players) {
+        args.push('u32', player.id, 'u16', player.x, 'u16', player.y, 'f32', player.angle, 'str', player.username);
     }
 
-    // write mobs
-    view.setUint16(offset, Object.keys(ENTITIES.MOBS).length); offset += 2; // number of mobs
-    for (const mob of Object.values(ENTITIES.MOBS)) {
-        view.setUint32(offset, mob.id); offset += 4; // id
-        view.setUint16(offset, mob.x); offset += 2; // x
-        view.setUint16(offset, mob.y); offset += 2; // y
-        view.setFloat32(offset, mob.angle); offset += 4; // angle
-        view.setUint8(offset++, mob.type); // type
+    const mobs = Object.values(ENTITIES.MOBS);
+    args.push('u16', mobs.length);
+    for (const mob of mobs) {
+        args.push('u32', mob.id, 'u16', mob.x, 'u16', mob.y, 'f32', mob.angle, 'u8', mob.type);
     }
 
-    // write structures to packet
-    view.setUint16(offset, Object.keys(ENTITIES.STRUCTURES).length); offset += 2 // number of structures
-    for (const structure of Object.values(ENTITIES.STRUCTURES)) {
-        view.setUint32(offset, structure.id); offset += 4; // id
-        view.setUint16(offset, structure.x); offset += 2; // x
-        view.setUint16(offset, structure.y); offset += 2; // y
-        view.setUint8(offset++, structure.type); // type
+    const structures = Object.values(ENTITIES.STRUCTURES);
+    args.push('u16', structures.length);
+    for (const structure of structures) {
+        args.push('u32', structure.id, 'u16', structure.x, 'u16', structure.y, 'u8', structure.type);
     }
 
-    return buffer;
+    return buildPacket(...args);
 }

@@ -22,7 +22,7 @@ export const entityMap = {
             },
             '2': {
                 name: 'player-warrior',
-                src: './images/player/player-warrior.png'
+                src: './images/player/player-bushman.png'
             },
             '3': {
                 name: 'player-hitman',

@@ -199,7 +199,9 @@ function render() {
     }
 
     // level percentage bar
-    const percentage = localPlayer.score / entityMap.PLAYERS.levels[localPlayer.level + 1];
+    const currentLevelScore = entityMap.PLAYERS.levels[localPlayer.level];
+    const nextLevelScore = entityMap.PLAYERS.levels[localPlayer.level + 1];
+    const percentage = Math.max(0.01, (localPlayer.score - currentLevelScore) / (nextLevelScore - currentLevelScore));
     const barWidth = LC.width / 1.15;
     const barHeight = 30;
     LC.drawRect({

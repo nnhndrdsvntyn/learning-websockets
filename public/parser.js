@@ -170,7 +170,10 @@ export function parsePacket(buffer) {
         const entityId = view.getUint32(offset); offset += 4; // entity id to add
         const x = view.getUint16(offset); offset += 2; // x
         const y = view.getUint16(offset); offset += 2; // y
-        const angle = view.getFloat32(offset); offset += 4; // angle
+        let angle;
+        if (buffer.byteLength > 10)  {
+            angle = view.getFloat32(offset); offset += 4; // angle
+        }// greater than 10 means its not a player add packet, its a projectile / mob
         if (entityType === 1) {
             new Player(entityId, x, y);
         } else if (entityType === 2) {

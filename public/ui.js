@@ -1,4 +1,4 @@
-import { encodeUsername, sendChat } from './helpers.js';
+import { encodeUsername, sendChat, buildPacket } from './helpers.js';
 import { ws } from './client.js';
 
 export let isUIOpen = false;
@@ -159,12 +159,7 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
     const activeKeys = { w: 0, a: 0, s: 0, d: 0 };
 
     const sendKey = (key, state) => {
-        const buffer = new ArrayBuffer(3);
-        const view = new DataView(buffer);
-        view.setUint8(0, 3);
-        view.setUint8(1, key);
-        view.setUint8(2, state);
-        ws.send(buffer);
+        ws.send(buildPacket('u8', 3, 'u8', key, 'u8', state));
     };
 
     const updateKeys = (dx, dy) => {
@@ -226,20 +221,12 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
 
     // Screen Touch Logic
     const sendAttack = (state) => {
-        const buffer = new ArrayBuffer(2);
-        const view = new DataView(buffer);
-        view.setUint8(0, 4);
-        view.setUint8(1, state);
-        ws.send(buffer);
+        ws.send(buildPacket('u8', 4, 'u8', state));
     };
 
     const updateRotation = (x, y) => {
         let angle = Math.atan2(y - innerHeight / 2, x - innerWidth / 2);
-        const buffer = new ArrayBuffer(6);
-        const view = new DataView(buffer);
-        view.setUint8(0, 2); // 2 for angle packet
-        view.setFloat32(1, angle);
-        ws.send(buffer);
+        ws.send(buildPacket('u8', 2, 'f32', angle));
         if (window.ENTITIES?.PLAYERS?.[window.myId]) {
             window.ENTITIES.PLAYERS[window.myId].angle = angle;
         }
@@ -286,12 +273,7 @@ function setupDesktopControls() {
         let angle =
             Math.atan2(e.clientY - innerHeight / 2, e.clientX - innerWidth / 2);
 
-        const buffer = new ArrayBuffer(6);
-        const view = new DataView(buffer);
-
-        view.setUint8(0, 2); // 2 for angle packet
-        view.setFloat32(1, angle);
-        ws.send(buffer);
+        ws.send(buildPacket('u8', 2, 'f32', angle));
 
         // set local player's angle directly
         if (window.ENTITIES?.PLAYERS?.[window.myId] && window.ENTITIES?.PLAYERS?.[window.myId].swingState === 0) {
@@ -302,28 +284,17 @@ function setupDesktopControls() {
     window.addEventListener("mousedown", e => {
         if (isUIOpen || isChatOpen) return;
 
-        const buffer = new ArrayBuffer(2);
-        const view = new DataView(buffer);
-
         if (e.button === 0) {
-            view.setUint8(0, 4); // 4 for set attack packet
-            view.setUint8(1, 1) // 1 for true
+            ws.send(buildPacket('u8', 4, 'u8', 1));
         }
-
-        ws.send(buffer);
     });
 
     window.addEventListener("mouseup", e => {
         if (isUIOpen || isChatOpen) return;
 
-        const buffer = new ArrayBuffer(2);
-        const view = new DataView(buffer);
-
         if (e.button === 0) {
-            view.setUint8(0, 4); // 4 for set attack packet
-            view.setUint8(1, 0) // 1 for false
+            ws.send(buildPacket('u8', 4, 'u8', 0));
         }
-        ws.send(buffer);
     });
 
     const keys = new Set();
@@ -350,14 +321,7 @@ function setupDesktopControls() {
         const key = keyMap[keyName];
         const state = isDown ? 1 : 0;
 
-        const buffer = new ArrayBuffer(3);
-        const view = new DataView(buffer);
-
-        view.setUint8(0, 3); // input key packet type
-        view.setUint8(1, key); // key type
-        view.setUint8(2, state); // key state
-
-        ws.send(buffer);
+        ws.send(buildPacket('u8', 3, 'u8', key, 'u8', state));
     };
 
     document.addEventListener('keydown', (e) => handleKey(e, true));

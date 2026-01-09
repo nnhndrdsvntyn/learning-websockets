@@ -11,6 +11,7 @@ export class Projectile {
         this.type = type;
         this.speed = entityMap.PROJECTILES[type].speed;
         this.radius = entityMap.PROJECTILES[type].radius;
+        this.damage = entityMap.PROJECTILES[type].damage;
         this.distanceTraveled = 0;
 
         let spawnTime = performance.now();
@@ -34,8 +35,15 @@ export class Projectile {
             const distance = Math.sqrt(Math.pow(structure.x - this.x, 2) + Math.pow(structure.y - this.y, 2));
 
             if (distance <= structure.radius + this.radius) {
-                ENTITIES.deleteEntity('projectile', this.id);
-                return;
+                if (structure.type === 3) {
+                    // bushes slow it down, and make its damage half
+                    this.speed =  entityMap.PROJECTILES[this.type].speed / 2;
+                    this.damage = entityMap.PROJECTILES[this.type].damage / 2;
+                } else {
+                    // other structures block the projectile
+                    ENTITIES.deleteEntity('projectile', this.id);
+                    return;
+                }
             }
         }
         
@@ -48,7 +56,7 @@ export class Projectile {
 
             if (distance <= player.radius + this.radius) {
                 // damage player
-                player.health -= entityMap.PROJECTILES[this.type].damage;
+                player.health -= this.damage;
                 // knock player back
                 const knockbackAngle = Math.atan2(player.y - this.shooter.y, player.x - this.shooter.x);
                 player.x += Math.cos(knockbackAngle) * 10;
@@ -72,7 +80,7 @@ export class Projectile {
 
             if (distance <= mob.radius + this.radius) {
                 // damage mob
-                mob.health -= entityMap.PROJECTILES[this.type].damage;
+                mob.health -= this.damage;
 
                 // knock mob back
                 const knockbackAngle = Math.atan2(mob.y - this.shooter.y, mob.x - this.shooter.x);

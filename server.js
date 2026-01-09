@@ -10,6 +10,7 @@ import {
     ENTITIES,
     buildInitPacket
 } from './server/game.js';
+import { buildPacket } from './server/helpers.js';
 
 const app = express();
 const PORT = 3000;
@@ -116,81 +117,37 @@ function update() {
         }
 
         if (playersToSend.length > 0 || mobsToSend.length > 0 || projectilesToSend.length > 0) {
-            // calculate size
-            let bufferLength = 0;
-            bufferLength += 1; // packet type
-            bufferLength += 1; // player count
-            bufferLength += (playersToSend.length * 24) // id(4) + x(2) + y(2) angle(4) + swingState(1) + health(2) + maxHealh(2) + score(4) + level(1) + username length(1) + chat message length(1)
-
-            for (const player of playersToSend) {
-                bufferLength += Buffer.byteLength(player.username); // dynamic, based on player's username. so we need a for loop to check for this.
-            }
-
-            for (const player of playersToSend) {
-                bufferLength += Buffer.byteLength(player.chatMessage); // dynamic, based on player's chat message. so we need a for loop to check for this.
-            }
-
-            bufferLength += 2; // mob count
-            bufferLength += mobsToSend.length * 17; // id(4) + x(2) + y(2) + angle(4) + health(2) + maxHealth(2) + type(1)
+            const args = ['u8', 2];
             
-            bufferLength += 2; // projectile count
-            bufferLength += projectilesToSend.length * 13; // id(4) + x(2) + y(2) + angle(4) + type(1)
-
-            const buffer = new ArrayBuffer(bufferLength);
-            const view = new DataView(buffer);
-            let offset = 0;
-
-            view.setUint8(offset++, 2); // 2 for update packet
-            view.setUint8(offset++, playersToSend.length);
+            args.push('u8', playersToSend.length);
 
             for (const player of playersToSend) {
-                const username = player.username;
-                const chatMessage = player.chatMessage;
-
-                view.setUint32(offset, player.id); offset += 4;
-                view.setUint16(offset, player.x); offset += 2;
-                view.setUint16(offset, player.y); offset += 2;
-                view.setFloat32(offset, player.angle); offset += 4;
-                view.setUint16(offset, player.health); offset += 2;
-                view.setUint16(offset, player.maxHealth); offset += 2;
-                view.setUint32(offset, player.score); offset += 4;
-                view.setUint8(offset++, player.level);
-                view.setUint8(offset++, player.swingState);
-
-                const usernameBuf = Buffer.from(username);
-                view.setUint8(offset++, usernameBuf.length); // username length
-                for (const byte of usernameBuf) {
-                    view.setUint8(offset++, byte);
-                }
-
-                const chatMessageBuf = Buffer.from(chatMessage);
-                view.setUint8(offset++, chatMessageBuf.length); // chat message length
-                for (const byte of chatMessageBuf) {
-                    view.setUint8(offset++, byte);
-                }
+                args.push(
+                    'u32', player.id,
+                    'u16', player.x,
+                    'u16', player.y,
+                    'f32', player.angle,
+                    'u16', player.health,
+                    'u16', player.maxHealth,
+                    'u32', player.score,
+                    'u8', player.level,
+                    'u8', player.swingState,
+                    'str', player.username,
+                    'str', player.chatMessage
+                );
             }
 
-            view.setUint16(offset, mobsToSend.length); offset += 2;
+            args.push('u16', mobsToSend.length);
             for (const mob of mobsToSend) {
-                view.setUint32(offset, mob.id); offset += 4;
-                view.setUint16(offset, mob.x); offset += 2;
-                view.setUint16(offset, mob.y); offset += 2;
-                view.setFloat32(offset, mob.angle); offset += 4;
-                view.setUint16(offset, mob.health); offset += 2;
-                view.setUint16(offset, mob.maxHealth); offset += 2;
-                view.setUint8(offset++, mob.type);
+                args.push('u32', mob.id, 'u16', mob.x, 'u16', mob.y, 'f32', mob.angle, 'u16', mob.health, 'u16', mob.maxHealth, 'u8', mob.type);
             }
 
-            view.setUint16(offset, projectilesToSend.length); offset += 2;
+            args.push('u16', projectilesToSend.length);
             for (const projectile of projectilesToSend) {
-                view.setUint32(offset, projectile.id); offset += 4;
-                view.setUint16(offset, projectile.x); offset += 2;
-                view.setUint16(offset, projectile.y); offset += 2;
-                view.setFloat32(offset, projectile.angle); offset += 4;
-                view.setUint8(offset++, projectile.type);
+                args.push('u32', projectile.id, 'u16', projectile.x, 'u16', projectile.y, 'f32', projectile.angle, 'u8', projectile.type);
             }
 
-            ws.send(buffer);
+            ws.send(buildPacket(...args));
         }
     });
 }

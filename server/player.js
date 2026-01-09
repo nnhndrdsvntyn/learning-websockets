@@ -1,8 +1,10 @@
 import { ENTITIES } from './game.js';
 import { entityMap } from '../public/shared/entitymap.js';
+import { wss } from '../server.js';
 export class Player {
     constructor(id, x, y) {
         this.id = id;
+        this.isAdmin = false;
 
         this.speed = entityMap.PLAYERS.baseMovementSpeed;
         this.radius = entityMap.PLAYERS.baseRadius;
