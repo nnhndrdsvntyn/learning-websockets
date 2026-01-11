@@ -12,7 +12,7 @@ export class Structure {
 
         ENTITIES.STRUCTURES[id] = this;
     }
-    handleCollisions() {
+    resolveCollisions() {
         if (entityMap.STRUCTURES[this.type].noCollisions) return;
         
         // check collisions with players

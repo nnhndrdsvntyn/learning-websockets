@@ -71,6 +71,7 @@ export function parsePacket(buffer) {
             const score = view.getUint32(offset); offset += 4;
             const level = view.getUint8(offset++);
             const swingState = view.getUint8(offset++);
+            const hasShield = view.getUint8(offset++);
 
             const usernameLength = view.getUint8(offset++);
             const username = new TextDecoder().decode(new Uint8Array(view.buffer, offset, usernameLength));
@@ -96,6 +97,7 @@ export function parsePacket(buffer) {
             ENTITIES.PLAYERS[id].username = username;
             ENTITIES.PLAYERS[id].newSwingState = swingState;
             ENTITIES.PLAYERS[id].chatMessage = chatMessage;
+            ENTITIES.PLAYERS[id].hasShield = hasShield;
         }
 
         // all players that aren't in this update will have their x and y set to undefined, because they are out of range.

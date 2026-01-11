@@ -35,6 +35,8 @@ export class Player {
         this.health = undefined;
         this.maxHealth = undefined;
 
+        this.hasShield = false;
+
         this.username = "";
         this.chatMessage = "";
 
@@ -72,6 +74,15 @@ export class Player {
         const screenPosX = this.x - camera.x;
         const screenPosY = this.y - camera.y;
 
+        if (this.hasShield) {
+            LC.drawImage({
+                name: 'spawn-zone-shield',
+                pos: [screenPosX - this.radius * 1.5, screenPosY - this.radius * 1.5],
+                size: [this.radius * 3, this.radius * 3],
+                transparency: 0.5
+            });
+        }
+
         // lerp swing state
         const delta = this.newSwingState - this.swingState;
 
@@ -88,15 +99,26 @@ export class Player {
         this.swordAngleOffset = (this.swingState * (Math.PI / 6)) - (Math.PI / 2);
         const angleRad = this.angle + this.swordAngleOffset;
 
-        const swordLength = entityMap.SWORDS.imgs[this.level].swordLength;
+        let swordLength;
+        if (typeof entityMap.SWORDS.imgs[this.level] === 'undefined') {
+            swordLength = 200;
+        } else {
+            swordLength = entityMap.SWORDS.imgs[this.level].swordLength;
+        }
+
         const swordHeight = swordLength / 3;
 
         // move origin to the handle instead of center
         const offsetX = Math.cos(angleRad) * (this.radius + swordLength / 2);
         const offsetY = Math.sin(angleRad) * (this.radius + swordLength / 2);
 
+        let swordImgName = `swords-wipsword`
+        if (LC.images[`swords-sword${this.level}`]) {
+            swordImgName = `swords-sword${this.level}`
+        }
+
         LC.drawImage({
-            name: `swords-sword${this.level}`,
+            name: swordImgName,
             pos: [
                 screenPosX + offsetX - swordLength / 2,
                 screenPosY + offsetY - swordHeight / 2

@@ -14,11 +14,17 @@ export class Projectile {
         this.damage = entityMap.PROJECTILES[type].damage;
         this.distanceTraveled = 0;
 
-        let spawnTime = performance.now();
+        this.maxDistance = entityMap.PROJECTILES[type].maxDistance;
 
         this.shooter = shooter;
 
         ENTITIES.PROJECTILES[id] = this;
+
+        // wip projectile
+        if (type != shooter.level) {
+            this.type = 1;
+            this.maxDistance = entityMap.SWORDS.imgs[0].swordLength;
+        }
     }
     move() {
         this.x += Math.cos(this.angle) * this.speed;
@@ -39,6 +45,11 @@ export class Projectile {
                     // bushes slow it down, and make its damage half
                     this.speed =  entityMap.PROJECTILES[this.type].speed / 2;
                     this.damage = entityMap.PROJECTILES[this.type].damage / 2;
+                    if (this.type != this.shooter.level) {
+                        this.maxDistance = entityMap.SWORDS.imgs[0].swordLength / 2;
+                    } else {
+                        this.maxDistance = entityMap.PROJECTILES[this.type].maxDistance / 2;
+                    }
                 } else {
                     // other structures block the projectile
                     ENTITIES.deleteEntity('projectile', this.id);
@@ -56,7 +67,9 @@ export class Projectile {
 
             if (distance <= player.radius + this.radius) {
                 // damage player
-                player.health -= this.damage;
+                if (!player.hasShield) {
+                    player.health -= this.damage;
+                }
                 // knock player back
                 const knockbackAngle = Math.atan2(player.y - this.shooter.y, player.x - this.shooter.x);
                 player.x += Math.cos(knockbackAngle) * 10;
@@ -99,7 +112,7 @@ export class Projectile {
         }
     }
     process() {
-        if (this.distanceTraveled > entityMap.PROJECTILES[this.type].maxDistance) {
+        if (this.distanceTraveled > this.maxDistance) {
             ENTITIES.deleteEntity('projectile', this.id);
         }
         

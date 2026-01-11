@@ -75,7 +75,7 @@ function update() {
     // handle structure collisions
     for (const id in ENTITIES.STRUCTURES) {
         const structure = ENTITIES.STRUCTURES[id];
-        structure.handleCollisions();
+        structure.resolveCollisions();
     }
 
     // gather all players
@@ -132,8 +132,9 @@ function update() {
                     'u32', player.score,
                     'u8', player.level,
                     'u8', player.swingState,
+                    'u8', player.hasShield,
                     'str', player.username,
-                    'str', player.chatMessage
+                    'str', player.chatMessage,
                 );
             }
 

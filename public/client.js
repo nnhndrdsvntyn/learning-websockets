@@ -25,6 +25,12 @@ LC.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 // window.LC = LC;
 
 // load images
+for (const image of Object.values(entityMap.otherImgs)) {
+    LC.loadImage({
+        name: image.name,
+        src: image.src
+    });
+}
 for (const image of Object.values(entityMap.PLAYERS.imgs)) {
     LC.loadImage({
         name: image.name,
@@ -201,7 +207,7 @@ function render() {
     // level percentage bar
     const currentLevelScore = entityMap.PLAYERS.levels[localPlayer.level];
     const nextLevelScore = entityMap.PLAYERS.levels[localPlayer.level + 1];
-    const percentage = Math.max(0.01, (localPlayer.score - currentLevelScore) / (nextLevelScore - currentLevelScore));
+    const percentage = Math.max(0, (localPlayer.score - currentLevelScore) / (nextLevelScore - currentLevelScore));
     const barWidth = LC.width / 1.15;
     const barHeight = 30;
     LC.drawRect({
@@ -210,12 +216,14 @@ function render() {
         color: 'gray',
         cornerRadius: 5
     });
-    LC.drawRect({
-        pos: [LC.width / 2 - barWidth / 2, LC.height - barHeight - 30],
-        size: [barWidth * percentage, barHeight],
-        color: 'cyan',
-        cornerRadius: 5
-    });
+    if (percentage > 0) {
+        LC.drawRect({
+            pos: [LC.width / 2 - barWidth / 2, LC.height - barHeight - 30],
+            size: [barWidth * percentage, barHeight],
+            color: 'cyan',
+            cornerRadius: 5
+        });
+    }
     setTimeout(() => {
         render();
     }, 1000 / TPS.clientCapped)

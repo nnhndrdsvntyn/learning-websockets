@@ -11,6 +11,8 @@ export class Player {
 
         this.angle = 0;
 
+        this.hasShield = false;
+
         this.health = 100;
         this.maxHealth = 100;
 
@@ -52,7 +54,7 @@ export class Player {
         }
     }
     attack() {
-        if (Date.now() - this.lastAttackTime < this.attackCooldownTime || !this.attacking) return;
+        if (Date.now() - this.lastAttackTime < this.attackCooldownTime || !this.attacking || this.hasShield) return;
         this.lastAttackTime = Date.now();
         this.swingState = 0.1;
 
@@ -65,6 +67,10 @@ export class Player {
             const projectileAngle = shooter.angle + angleOffset;
             const xOffset = Math.cos(projectileAngle) * shooter.radius; // spawn outside player
             const yOffset = Math.sin(projectileAngle) * shooter.radius; // spawn outside player
+            let projectileType = 1;
+            if (entityMap.PROJECTILES[this.level]) {
+                projectileType = this.level;
+            }
 
             ENTITIES.newEntity({
                 entityType: 'projectile',
@@ -72,7 +78,7 @@ export class Player {
                 x: shooter.x + xOffset,
                 y: shooter.y + yOffset,
                 angle: projectileAngle,
-                type: this.level,
+                type: projectileType,
                 shooter: shooter
             });
         }
@@ -100,6 +106,24 @@ export class Player {
                 player.x += dx;
                 player.y += dy;
             }
+        }
+
+        let touchingSafeZone = false;
+
+        for (const structure of Object.values(ENTITIES.STRUCTURES)) {
+            if (entityMap.STRUCTURES[structure.type].isSafeZone) {
+                const distance = Math.sqrt(Math.pow(structure.x - this.x, 2) + Math.pow(structure.y - this.y, 2));
+                if (distance <= structure.radius + this.radius) {
+                    touchingSafeZone = true;
+                    break;
+                }
+            }
+        }
+
+        if (touchingSafeZone) {
+            this.hasShield = true;
+        } else {
+            this.hasShield = false;
         }
     }
     clamp() {

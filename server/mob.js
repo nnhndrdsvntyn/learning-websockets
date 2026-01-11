@@ -51,8 +51,8 @@ export class Mob {
                 player.x += dx;
                 player.y += dy;
 
-                // if its a hostile mob and its hunting, damage the player
-                if (entityMap.MOBS[this.type].isHostile && this.isAlarmed && this.target.id === player.id) {
+                // if its a neutral mob and its hunting, damage the player
+                if (entityMap.MOBS[this.type].isNeutral && this.isAlarmed && this.target.id === player.id && !player.hasShield) {
                     // check the player's last death time to stop targetting it after it died
                     player.damage(entityMap.MOBS[this.type].damage)
                 }
@@ -61,15 +61,16 @@ export class Mob {
     }
     turn() {
         if (this.isAlarmed) {
-            if (this.target && entityMap.MOBS[this.type].isHostile) { // turn towards target if hostile
+            if (this.target && ENTITIES.PLAYERS[this.target.id] && entityMap.MOBS[this.type].isNeutral) { // turn towards target if hostile
                 this.angle = Math.atan2(this.target.y - this.y, this.target.x - this.x);
                 return; // don't run code after this
-            } else if (this.target && !entityMap.MOBS[this.type].isHostile) { // turn away from target if not hostile
+            } else if (this.target && ENTITIES.PLAYERS[this.target.id] && !entityMap.MOBS[this.type].isNeutral) { // turn away from target if not hostile
                 this.angle = Math.atan2(this.y - this.target.y, this.x - this.target.x);
                 return; // don't run code after this
             } else {
                 // no target, stop being alarmed and reset speed
                 this.isAlarmed = false;
+                this.target = null;
                 this.speed = entityMap.MOBS[this.type].speed;
                 return;
             }
@@ -102,8 +103,8 @@ export class Mob {
         
     }
     die(killer) {
-        // give the killer score if they're a player (from player class)
-        if (killer instanceof Player) killer.addScore(this.score);
+        // activate the mobs death action
+        entityMap.MOBS[this.type].deathAction(killer);
         
         // delete this mob
         ENTITIES.deleteEntity('mob', this.id);
@@ -126,7 +127,7 @@ export class Mob {
                 this.speed = entityMap.MOBS[this.type].speed;
                 this.target = null;
             } else if (this.target) {
-                if (entityMap.MOBS[this.type].isHostile) {
+                if (entityMap.MOBS[this.type].isNeutral) {
                     if (this.target.lastDiedTime > this.startHuntingTime) {
                         this.isAlarmed = false;
                         this.speed = entityMap.MOBS[this.type].speed;
@@ -135,6 +136,7 @@ export class Mob {
                 }
             } else {
                 this.isAlarmed = false;
+                this.target = null;
                 this.speed = entityMap.MOBS[this.type].speed;
             }
         }
@@ -157,5 +159,8 @@ setTimeout(() => {
     }
     for (let i = 202; i <= 302; i++) {
         new Mob(i, Math.floor(Math.random() * 10000), Math.floor(Math.random() * 10000), 3);
+    }
+    for (let i = 303; i <= 353; i++) {
+        new Mob(i, Math.floor(Math.random() * 10000), Math.floor(Math.random() * 10000), 4);
     }
 }, 100);
