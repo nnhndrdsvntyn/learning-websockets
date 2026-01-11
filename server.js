@@ -27,7 +27,7 @@ export const wss = new WebSocketServer({
 });
 
 wss.on('connection', (ws) => {
-    if (ENTITIES.playerIds.size + 1 > 10) { // max players is 10
+    if (ENTITIES.playerIds.size + 1 > 100) { // max players is 10
         ws.send(0);
         ws.close();
         return;
