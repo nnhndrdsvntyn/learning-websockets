@@ -12,6 +12,12 @@ import { wss } from '../server.js';
 export function parsePacket(buffer, ws) {
     let offset = 0;
 
+    const view = new DataView(
+        buffer.buffer,
+        buffer.byteOffset,
+        buffer.byteLength
+    );
+
     const packetType = buffer.readUint8(offset++);
     if (packetType === 1) { // type 1 is username packet
         const usernameLength = buffer.readUint8(offset++);
@@ -46,12 +52,6 @@ export function parsePacket(buffer, ws) {
 
     if (packetType === 2) { // angle packet
         if (ENTITIES.PLAYERS[ws.id].swingState != 0) return;
-        
-        const view = new DataView(
-            buffer.buffer,
-            buffer.byteOffset,
-            buffer.byteLength
-        );
 
         const angle = view.getFloat32(1, false); // offset = 1, big-endian
         ENTITIES.PLAYERS[ws.id].angle = angle;
@@ -107,7 +107,7 @@ export function parsePacket(buffer, ws) {
         } else if (cmdType === 4) { // set xp of an entity
             const entityType = buffer.readUint8(offset++);
             const entityId = buffer.readUInt32BE(offset); offset += 4;
-            const scoreAmount = buffer.readUint32BE(offset); offset += 4;
+            const scoreAmount = view.getUint32(offset, false); offset += 4;
             cmdRun.setscore(entityType, entityId, scoreAmount);
         }
     }

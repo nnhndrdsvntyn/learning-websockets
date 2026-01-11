@@ -62,14 +62,20 @@ for (const projectile of Object.values(entityMap.PROJECTILES)) {
     });
 }
 
-export const ws = new WebSocket(`wss://${location.host}`);
+export const ws = new WebSocket(`ws://${location.host}`);
 ws.binaryType = 'arraybuffer'
 window.ws = ws;
 
 export let myId;
+let serverFull = false;
 ws.onopen = () => {
     console.log('%cConnected to server', 'color: lime; font-weight: bold;');
     setTimeout(() => {
+        if (serverFull) {
+            document.body.innerHTML = 'Server is full. Please try again later.';
+            return;
+        }
+        
         let username = '';
         while (username.length === 0 || username.length > 15) {
             username = prompt("Enter your username\nMax 15 characeters");
@@ -84,10 +90,16 @@ ws.onopen = () => {
 }
 ws.onclose = () => {
     console.log('%cDisconnected from server', 'color: red; font-weight: bold;');
-    window.location.reload();
+    if (!serverFull) {
+        window.location.reload();
+    }
 }
 
 ws.onmessage = (event) => {
+    if (event.data == 0) {
+        alert("Server full");
+        serverFull = true;
+    }
     if (!myId) {
         myId = parseInt(event.data);
         window.myId = myId;
@@ -179,9 +191,10 @@ function render() {
 
     // lerp local player's score
     const lerpFactor = (TPS.clientCapped / TPS.server) / 10;
-    localPlayer.score += (localPlayer.newScore - localPlayer.score) * ( lerpFactor / 3);
-    if (localPlayer.newScore - localPlayer.score < 0.01) {
-        localPlayer.score = localPlayer.newScore; // automatically set score to newScore if difference is close enough to new score
+    const targetScore = Number(localPlayer.newScore);
+    localPlayer.score += (targetScore - localPlayer.score) * ( lerpFactor / 3);
+    if (targetScore - localPlayer.score < 0.01) {
+        localPlayer.score = targetScore; // automatically set score to newScore if difference is close enough to new score
     }
     
     // info box (top left of screen)
@@ -205,9 +218,16 @@ function render() {
     }
 
     // level percentage bar
-    const currentLevelScore = entityMap.PLAYERS.levels[localPlayer.level];
-    const nextLevelScore = entityMap.PLAYERS.levels[localPlayer.level + 1];
-    const percentage = Math.max(0, (localPlayer.score - currentLevelScore) / (nextLevelScore - currentLevelScore));
+    const currentLevelScore = entityMap.PLAYERS.levels[localPlayer.level].score;
+    let nextLevelScore = entityMap.PLAYERS.levels[localPlayer.level + 1]?.score;
+    if (nextLevelScore === undefined) {
+        nextLevelScore = currentLevelScore; // Use current score if next level doesn't exist
+    }
+
+    let percentage = Math.max(0, (localPlayer.score - currentLevelScore) / (nextLevelScore - currentLevelScore));
+    if (percentage === Infinity) {
+        percentage = 1;
+    }
     const barWidth = LC.width / 1.15;
     const barHeight = 30;
     LC.drawRect({
@@ -224,6 +244,70 @@ function render() {
             cornerRadius: 5
         });
     }
+
+    // leaderboard
+    const leaderboard = ENTITIES.leaderboard
+    LC.drawRect({
+        color: '#333333',
+        pos: [LC.width - 255, 5],
+        size: [250, 25 * leaderboard.length + 50],
+        transparency: 0.9,
+        cornerRadius: 5
+    });
+    for (let i = 0; i < leaderboard.length; i++) {
+        const player = leaderboard[i];
+        const score = Number(player.score);
+        let formattedScore;
+        if (score.toString().includes('e')) {
+            formattedScore = score.toExponential(2);
+        } else if (score >= 1e15) {
+            formattedScore = (score / 1e15).toFixed(2) + 'Q';
+        } else if (score >= 1e12) {
+            formattedScore = (score / 1e12).toFixed(2) + 'T';
+        } else if (score >= 1e9) {
+            formattedScore = (score / 1e9).toFixed(2) + 'B';
+        } else if (score >= 1e6) {
+            formattedScore = (score / 1e6).toFixed(2) + 'M';
+        } else if (score >= 1e3) {
+            formattedScore = (score / 1e3).toFixed(2) + 'k';
+        } else {
+            formattedScore = score.toFixed(0);
+        }
+
+        let rankText = `${i + 1}. ${player.username.slice(0, 10)}`;
+        if (player.username.length > 10) {
+            rankText += '...';
+        }
+        const scoreText = formattedScore;
+
+        const color = player.id === myId ? 'lime' : 'white';
+
+        // Measure rank text to position score text correctly
+        const rankMetrics = LC.measureText({
+            text: rankText,
+            font: '18px Arial'
+        });
+
+        LC.drawText({
+            text: rankText,
+            pos: [LC.width - 245, 60 + i * 25],
+            font: '18px Arial',
+            color: color
+        });
+        LC.drawText({
+            text: scoreText,
+            pos: [LC.width - 245 + 230 - LC.measureText({ text: scoreText, font: '18px Arial' }).width, 60 + i * 25], // Align right
+            font: '18px Arial',
+            color: color
+        });
+    }
+
+    LC.drawText({
+        text: 'Leaderboard',
+        pos: [LC.width - 190, 30],
+        font: 'bold 20px Arial',
+        color: 'white'
+    });
     setTimeout(() => {
         render();
     }, 1000 / TPS.clientCapped)

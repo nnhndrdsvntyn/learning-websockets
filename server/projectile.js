@@ -22,7 +22,7 @@ export class Projectile {
 
         // wip projectile
         if (type != shooter.level) {
-            this.type = 1;
+            this.type = 5;
             this.maxDistance = entityMap.SWORDS.imgs[0].swordLength;
         }
     }

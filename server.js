@@ -27,6 +27,11 @@ export const wss = new WebSocketServer({
 });
 
 wss.on('connection', (ws) => {
+    if (ENTITIES.playerIds.size + 1 > 10) { // max players is 10
+        ws.send(0);
+        ws.close();
+        return;
+    }    
     let newId = Math.floor(Math.random() * 4294967295) + 1;
     while (ENTITIES.playerIds.has(newId)) {
         newId = Math.floor(Math.random() * 4294967295) + 1;
@@ -37,6 +42,7 @@ wss.on('connection', (ws) => {
     ENTITIES.playerIds.add(ws.id);
 
     console.log('Client connected with id:', ws.id);
+    
     ENTITIES.newEntity({
         entityType: 'player',
         id: ws.id,
@@ -117,7 +123,7 @@ function update() {
         }
 
         if (playersToSend.length > 0 || mobsToSend.length > 0 || projectilesToSend.length > 0) {
-            const args = ['u8', 2];
+            const args = ['u8', 2]; // update packet
             
             args.push('u8', playersToSend.length);
 
@@ -149,6 +155,18 @@ function update() {
             }
 
             ws.send(buildPacket(...args));
+
+            ENTITIES.PLAYERS[ws.id].updateCount++;
+            if (ENTITIES.PLAYERS[ws.id].updateCount >= TPS.server * 1.5) {
+                ENTITIES.PLAYERS[ws.id].updateCount = 0;
+                const leaderboard = Object.values(ENTITIES.PLAYERS).sort((a, b) => Number(b.score) - Number(a.score)).slice(0, 10);
+                let args2 = ['u8', 5]; // leaderboard packet
+                args2.push('u8', leaderboard.length);
+                for (const player of leaderboard) {
+                    args2.push('u32', player.id, 'u32', player.score ,'str', player.username);
+                }
+                ws.send(buildPacket(...args2));
+            }
         }
     });
 }

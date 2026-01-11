@@ -12,11 +12,26 @@ export const entityMap = {
         baseMovementSpeed: 15,
         baseAttackCooldown: 750, // in milliseconds
         levels: {
-            1: 0, // default
-            2: 100, // warrior
-            3: 250, // hitman
-            4: 400, // alien man
-            5: 700, // pirate
+            1: {
+                score: 0,
+                maxHealth: 100,
+            }, // default
+            2: {
+                score: 100,
+                maxHealth: 115,
+            }, // warrior
+            3: {
+                score: 250,
+                maxHealth: 130,
+            }, // hitman
+            4: {
+                score: 500,
+                maxHealth: 145,
+            }, // alien man
+            5: {
+                score: 750,
+                maxHealth: 160,
+            }, // pirate
         },
         imgs: {
             '1': {
@@ -67,6 +82,11 @@ export const entityMap = {
                 name: 'swords-sword4',
                 src: './images/swords/sword4.png',
                 swordLength: 190
+            },
+            '5': {
+                name: 'swords-sword5',
+                src: './images/swords/sword5.png',
+                swordLength: 205
             }
         }
             
@@ -155,13 +175,23 @@ export const entityMap = {
         },
         '4': {
             radius: 10,
-            speed: 40,
-            damage: 20,
+            speed: 45,
+            damage: 25,
             maxDistance: 190,
             knockbackStrength: 50,
             imgProportions: [1, 10],
             imgSrc: './images/projectiles/airslash4.png',
             imgName: 'projectiles-airslash4'
+        },
+        '5': {
+            radius: 10,
+            speed: 50,
+            damage: 30,
+            maxDistance: 205,
+            knockbackStrength: 50,
+            imgProportions: [1, 10],
+            imgSrc: './images/projectiles/airslash5.png',
+            imgName: 'projectiles-airslash5'
         }
     },
     STRUCTURES: {

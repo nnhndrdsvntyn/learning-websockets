@@ -19,6 +19,8 @@ export class Player {
         this.score = 10;
         this.level = 1;
 
+        this.updateCount = 0;
+
         this.lastDamagedTime = 0;
         this.lastDiedTime = 0;
 
@@ -47,6 +49,10 @@ export class Player {
         if (this.keys['d']) this.x += this.speed;
     }
     heal() {
+        if (entityMap.PLAYERS.levels[this.level]) {
+            this.maxHealth = entityMap.PLAYERS.levels[this.level].maxHealth;
+        }
+        
         const now = performance.now();
         if (now - this.lastHealedTime > 1000) {
             this.health = Math.min(this.health + 5, this.maxHealth);
@@ -67,7 +73,7 @@ export class Player {
             const projectileAngle = shooter.angle + angleOffset;
             const xOffset = Math.cos(projectileAngle) * shooter.radius; // spawn outside player
             const yOffset = Math.sin(projectileAngle) * shooter.radius; // spawn outside player
-            let projectileType = 1;
+            let projectileType = 4;
             if (entityMap.PROJECTILES[this.level]) {
                 projectileType = this.level;
             }
@@ -135,13 +141,19 @@ export class Player {
     }
     addScore(points) {
         // determine new level
-        for (const level in entityMap.PLAYERS.levels) {
-            if (this.score + points >= entityMap.PLAYERS.levels[level]) {
-                this.level = parseInt(level);
+        this.score += points;
+
+        const maxScore = 1000000000;
+        if (this.score > maxScore) this.score = maxScore;
+
+        let bestLevel = 1;
+        for (const [level, data] of Object.entries(entityMap.PLAYERS.levels)) {
+            if (this.score >= data.score) {
+                const lvl = parseInt(level);
+                if (lvl > bestLevel) bestLevel = lvl;
             }
         }
-        
-        this.score += points;
+        this.level = bestLevel;
     }
     damage(health) {
         if (performance.now() - this.lastDamagedTime < 250) return; // invulnerable for 500ms

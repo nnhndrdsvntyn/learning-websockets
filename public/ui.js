@@ -22,7 +22,7 @@ export function initializeUI() {
 
     // Settings Button
     const settingsBtn = createEl('button', {
-        position: 'absolute', top: '10px', right: '10px', pointerEvents: 'auto', cursor: 'pointer'
+        position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)', pointerEvents: 'auto', cursor: 'pointer'
     }, container, { textContent: '⚙' });
 
     // Settings Modal
@@ -63,6 +63,8 @@ export function initializeUI() {
     settingsModal.querySelector('#s').onclick = () => {
         const val = uInput.value.trim();
         if (val) {
+            if (ws.readyState !== ws.OPEN) return;
+            
             ws.send(encodeUsername(val));
             isUIOpen = false;
             settingsModal.style.display = 'none';
@@ -159,6 +161,8 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
     const activeKeys = { w: 0, a: 0, s: 0, d: 0 };
 
     const sendKey = (key, state) => {
+        if (ws.readyState !== ws.OPEN) return;
+        
         ws.send(buildPacket('u8', 3, 'u8', key, 'u8', state));
     };
 
@@ -221,13 +225,16 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
 
     // Screen Touch Logic
     const sendAttack = (state) => {
+        if (ws.readyState !== ws.OPEN) return;
         ws.send(buildPacket('u8', 4, 'u8', state));
     };
 
     const updateRotation = (x, y) => {
+        if (ws.readyState !== ws.OPEN) return;
+        
         let angle = Math.atan2(y - innerHeight / 2, x - innerWidth / 2);
         ws.send(buildPacket('u8', 2, 'f32', angle));
-        if (window.ENTITIES?.PLAYERS?.[window.myId]) {
+        if (window.ENTITIES?.PLAYERS?.[window.myId] && window.ENTITIES?.PLAYERS?.[window.myId].swingState === 0) {
             window.ENTITIES.PLAYERS[window.myId].angle = angle;
         }
     };
@@ -270,6 +277,7 @@ function setupMobileControls(container, chatInput, settingsBtn, settingsModal) {
 function setupDesktopControls() {
     window.addEventListener("mousemove", e => {
         if (isUIOpen) return;
+        if (ws.readyState !== ws.OPEN) return;
         let angle =
             Math.atan2(e.clientY - innerHeight / 2, e.clientX - innerWidth / 2);
 
@@ -283,14 +291,16 @@ function setupDesktopControls() {
 
     window.addEventListener("mousedown", e => {
         if (isUIOpen || isChatOpen) return;
+        if (ws.readyState !== ws.OPEN) return;
 
-        if (e.button === 0) {
+        if (e.button === 0) {            
             ws.send(buildPacket('u8', 4, 'u8', 1));
         }
     });
 
     window.addEventListener("mouseup", e => {
         if (isUIOpen || isChatOpen) return;
+        if (ws.readyState !== ws.OPEN) return;
 
         if (e.button === 0) {
             ws.send(buildPacket('u8', 4, 'u8', 0));
@@ -307,6 +317,8 @@ function setupDesktopControls() {
 
     const handleKey = (e, isDown) => {
         if (isUIOpen || isChatOpen) return;
+        if (ws.readyState !== ws.OPEN) return;
+
         const keyName = e.key.toLowerCase();
         if (!keyMap[keyName]) return;
 

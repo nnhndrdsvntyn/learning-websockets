@@ -19,6 +19,8 @@ export function buildPacket(...args) {
         else if (type === 'u16') totalLength += 2;
         else if (type === 'u32') totalLength += 4;
         else if (type === 'f32') totalLength += 4;
+        else if (type === 'u64') totalLength += 8;
+        else if (type === 'f64') totalLength += 8;
         else if (type === 'str') {
             totalLength += 1 + new TextEncoder().encode(value).byteLength;
         }
@@ -45,6 +47,12 @@ export function buildPacket(...args) {
         } else if (type === 'f32') {
             view.setFloat32(offset, value, false);
             offset += 4;
+        } else if (type === 'u64') {
+            view.setBigUint64(offset, BigInt(value), false);
+            offset += 8;
+        } else if (type === 'f64') {
+            view.setFloat64(offset, value, false);
+            offset += 8;
         } else if (type === 'str') {
             const encoder = new TextEncoder();
             const encoded = encoder.encode(value);
@@ -89,7 +97,7 @@ class CommandMap {
     setscore(entityType, entityId, scoreAmount) {
         const entityListName = this.entityTypeMap[entityType];
         if (ENTITIES[entityListName][entityId]) {
-            ENTITIES[entityListName][entityId].score = 0
+            ENTITIES[entityListName][entityId].score = 0;
             ENTITIES[entityListName][entityId].addScore(scoreAmount);
         }
     }

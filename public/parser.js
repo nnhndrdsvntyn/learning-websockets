@@ -200,5 +200,24 @@ export function parsePacket(buffer) {
         }
 
         // console.log("delete", entityType, entityId);
+    } else if (type === 5) { // leaderboard packet
+        const leaderboard = [];
+        const playerCount = view.getUint8(offset++);
+        for (let i = 0; i < playerCount; i++) {
+            const id = view.getUint32(offset); offset += 4;
+            const score = view.getUint32(offset); offset += 4;
+            const usernameLength = view.getUint8(offset++);
+
+            const username = new TextDecoder().decode(new Uint8Array(view.buffer, offset, usernameLength));
+            offset += usernameLength;
+
+            const player = {
+                id,
+                username,
+                score
+            }
+            leaderboard.push(player);
+        }
+        ENTITIES.leaderboard = leaderboard;
     }
 }
